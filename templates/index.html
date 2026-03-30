@@ -4,46 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config.name }} - {{ config.sub }}</title>
-    <!-- Google Fonts - Luxury Real Estate Style -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Satisfy&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Cormorant Garamond', serif;
             background: #f5f7fa;
-            color: #333333;
+            color: #333;
             line-height: 1.6;
         }
-        
-        /* Dark Mode */
         body.dark-mode {
             background: #1a1a2e;
-            color: #ffffff;
+            color: #fff;
         }
-        
         body.dark-mode .property-card {
             background: #1e1e2a;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
-        
         body.dark-mode .filters-section {
             background: #1e1e2a;
         }
-        
-        body.dark-mode .footer {
-            background: #0f0f1a;
-        }
-        
-        /* Header */
         .header {
             background: linear-gradient(135deg, #2c3e50 0%, #1a2632 100%);
             color: white;
@@ -51,15 +33,12 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 0 20px;
         }
-        
         .header-content {
             display: flex;
             justify-content: space-between;
@@ -67,36 +46,13 @@
             flex-wrap: wrap;
             gap: 20px;
         }
-        
         .logo h1 {
-            font-family: 'Great Vibes', 'Satisfy', cursive;
+            font-family: 'Great Vibes', cursive;
             font-size: 2.5em;
-            font-weight: 800;
-            background: linear-gradient(135deg, #ffd700 0%, #ffaa33 50%, #ff8800 100%);
+            background: linear-gradient(135deg, #ffd700 0%, #ff8800 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: 2px;
         }
-        
-        .logo p {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 0.8em;
-            letter-spacing: 3px;
-            color: rgba(255,255,255,0.7);
-            margin-top: 5px;
-        }
-        
-        .contact-info {
-            text-align: right;
-        }
-        
-        .contact-info a {
-            color: #ffd700;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        
         .theme-toggle {
             background: rgba(255,255,255,0.2);
             border: none;
@@ -104,43 +60,22 @@
             padding: 8px 15px;
             border-radius: 5px;
             cursor: pointer;
-            font-family: 'Cormorant Garamond', serif;
-            font-weight: 600;
-            transition: all 0.3s;
         }
-        
-        .theme-toggle:hover {
-            background: rgba(255,255,255,0.3);
-            transform: translateY(-2px);
-        }
-        
-        /* Hero Section */
         .hero {
             background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1600');
             background-size: cover;
             background-position: center;
-            height: 500px;
+            height: 400px;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
             color: white;
         }
-        
-        .hero-content h1 {
+        .hero h1 {
             font-family: 'Playfair Display', serif;
-            font-size: 3.5em;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 3em;
         }
-        
-        .hero-content p {
-            font-size: 1.3em;
-            font-family: 'Cormorant Garamond', serif;
-            letter-spacing: 1px;
-        }
-        
-        /* Filters Section */
         .filters-section {
             background: white;
             padding: 30px 0;
@@ -149,41 +84,31 @@
             top: 90px;
             z-index: 999;
         }
-        
         .filters-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 20px;
             align-items: end;
         }
-        
         .filter-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: 700;
             font-size: 0.85em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
-        
-        .filter-group select,
-        .filter-group input {
+        .filter-group select, .filter-group input {
             width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 8px;
             font-family: 'Cormorant Garamond', serif;
-            font-size: 1em;
-            background: white;
         }
-        
         body.dark-mode .filter-group select,
         body.dark-mode .filter-group input {
             background: #2a2a3a;
             border-color: #3a3a4a;
             color: white;
         }
-        
         .btn-filter {
             background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
             color: #2c3e50;
@@ -192,28 +117,16 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: 700;
-            font-family: 'Cormorant Garamond', serif;
-            transition: all 0.3s;
         }
-        
-        .btn-filter:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255,215,0,0.3);
-        }
-        
-        /* Properties Grid */
         .properties-section {
             padding: 50px 0;
         }
-        
         .section-title {
             text-align: center;
             font-family: 'Playfair Display', serif;
             font-size: 2.5em;
             margin-bottom: 40px;
-            position: relative;
         }
-        
         .section-title:after {
             content: '';
             display: block;
@@ -222,80 +135,32 @@
             background: #ffd700;
             margin: 15px auto 0;
         }
-        
         .properties-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 30px;
         }
-        
         .property-card {
             background: white;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: transform 0.3s;
             cursor: pointer;
         }
-        
         .property-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
         }
-        
         .property-image {
             position: relative;
             height: 250px;
             overflow: hidden;
         }
-        
         .property-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.5s;
         }
-        
-        .property-card:hover .property-image img {
-            transform: scale(1.05);
-        }
-        
-        .image-slideshow {
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-        
-        .slide {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-        
-        .slide.active {
-            opacity: 1;
-        }
-        
-        .slide img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .slideshow-controls {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.5);
-            padding: 5px 10px;
-            border-radius: 20px;
-            color: white;
-            font-size: 12px;
-            z-index: 10;
-        }
-        
         .property-badge {
             position: absolute;
             top: 15px;
@@ -306,9 +171,7 @@
             border-radius: 20px;
             font-size: 0.75em;
             font-weight: bold;
-            z-index: 10;
         }
-        
         .property-status {
             position: absolute;
             top: 15px;
@@ -317,31 +180,23 @@
             border-radius: 20px;
             font-size: 0.75em;
             font-weight: bold;
-            z-index: 10;
         }
-        
         .status-available { background: #4caf50; color: white; }
         .status-sold { background: #f44336; color: white; }
-        .status-under-offer { background: #ff9800; color: white; }
-        
         .property-info {
             padding: 20px;
         }
-        
         .property-title {
             font-family: 'Playfair Display', serif;
             font-size: 1.3em;
             margin-bottom: 10px;
-            font-weight: 700;
         }
-        
         .property-price {
             font-size: 1.5em;
             color: #ffd700;
             font-weight: bold;
             margin: 10px 0;
         }
-        
         .property-details {
             display: flex;
             gap: 15px;
@@ -350,112 +205,23 @@
             border-top: 1px solid #eee;
             border-bottom: 1px solid #eee;
         }
-        
-        body.dark-mode .property-details {
-            border-color: #3a3a4a;
-        }
-        
-        .detail-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.9em;
-        }
-        
-        .detail-item i {
-            color: #ffd700;
-        }
-        
-        .property-location {
-            color: #7f8c8d;
-            font-size: 0.9em;
-            margin-bottom: 15px;
-        }
-        
-        .property-agent {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid #eee;
-        }
-        
-        body.dark-mode .property-agent {
-            border-color: #3a3a4a;
-        }
-        
-        .agent-avatar {
-            width: 35px;
-            height: 35px;
-            background: #ffd700;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #2c3e50;
-        }
-        
-        /* Footer */
         .footer {
             background: #1a2632;
             color: white;
             padding: 50px 0 20px;
             margin-top: 50px;
         }
-        
         .footer-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 40px;
             margin-bottom: 30px;
         }
-        
-        .footer h3 {
-            font-family: 'Playfair Display', serif;
-            margin-bottom: 20px;
-            font-size: 1.3em;
-        }
-        
-        .footer a {
-            color: #ffd700;
-            text-decoration: none;
-        }
-        
-        .social-links {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .social-links a {
-            background: rgba(255,255,255,0.1);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-        }
-        
-        .social-links a:hover {
-            background: #ffd700;
-            transform: translateY(-3px);
-        }
-        
-        .social-links a:hover i {
-            color: #2c3e50;
-        }
-        
         .copyright {
             text-align: center;
             padding-top: 30px;
             border-top: 1px solid rgba(255,255,255,0.1);
-            font-size: 0.85em;
         }
-        
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -465,24 +231,18 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.8);
-            overflow-y: auto;
         }
-        
         .modal-content {
             background: white;
             margin: 50px auto;
-            padding: 0;
             width: 90%;
-            max-width: 1000px;
+            max-width: 800px;
             border-radius: 15px;
             overflow: hidden;
-            position: relative;
         }
-        
         body.dark-mode .modal-content {
             background: #1e1e2a;
         }
-        
         .modal-close {
             position: absolute;
             top: 20px;
@@ -490,65 +250,18 @@
             font-size: 35px;
             cursor: pointer;
             color: white;
-            z-index: 100;
-            background: rgba(0,0,0,0.5);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
-        
-        .modal-close:hover {
-            background: #ffd700;
-            color: #2c3e50;
-        }
-        
         .modal-body {
             padding: 30px;
         }
-        
-        .modal-images {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .modal-images img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        
-        /* Loading */
-        .loading {
-            text-align: center;
-            padding: 50px;
-            font-size: 1.2em;
-        }
-        
-        .no-properties {
-            text-align: center;
-            padding: 50px;
-            font-size: 1.2em;
-            color: #7f8c8d;
-        }
-        
         @media (max-width: 768px) {
-            .hero-content h1 { font-size: 2em; }
+            .hero h1 { font-size: 2em; }
             .properties-grid { grid-template-columns: 1fr; }
             .filters-grid { grid-template-columns: 1fr; }
-            .header-content { flex-direction: column; text-align: center; }
-            .contact-info { text-align: center; }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <div class="header">
         <div class="container">
             <div class="header-content">
@@ -556,35 +269,31 @@
                     <h1>Better Properties</h1>
                     <p>Real Estate Services Ltd</p>
                 </div>
-                <div class="contact-info">
-                    <p><i class="fas fa-phone"></i> {{ config.phone }}</p>
-                    <p><i class="fas fa-envelope"></i> {{ config.email }}</p>
-                    <p><i class="fab fa-whatsapp"></i> <a href="https://wa.me/{{ config.whatsapp }}">WhatsApp</a></p>
+                <div>
+                    <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i> Dark Mode</button>
+                    <a href="/admin/login" style="color: #ffd700; margin-left: 15px;">Admin Login</a>
                 </div>
-                <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i> Dark Mode</button>
             </div>
         </div>
     </div>
     
-    <!-- Hero Section -->
     <div class="hero">
-        <div class="hero-content">
+        <div>
             <h1>Find Your Dream Property</h1>
-            <p>Luxury homes, commercial spaces, and investment properties</p>
+            <p style="font-size: 1.2em;">Luxury homes, commercial spaces, and investment properties</p>
         </div>
     </div>
     
-    <!-- Filters -->
     <div class="filters-section">
         <div class="container">
-            <form method="GET" action="/" id="filterForm">
+            <form method="GET" action="/">
                 <div class="filters-grid">
                     <div class="filter-group">
-                        <label><i class="fas fa-search"></i> Search</label>
-                        <input type="text" name="search" placeholder="Search properties..." value="{{ search }}">
+                        <label>🔍 Search</label>
+                        <input type="text" name="search" placeholder="Search properties..." value="{{ search or '' }}">
                     </div>
                     <div class="filter-group">
-                        <label><i class="fas fa-location-dot"></i> Area</label>
+                        <label>📍 Area</label>
                         <select name="area">
                             <option value="">All Areas</option>
                             {% for area in areas %}
@@ -593,7 +302,7 @@
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label><i class="fas fa-tag"></i> Listing Type</label>
+                        <label>🏷️ Listing Type</label>
                         <select name="listing_type">
                             <option value="">All</option>
                             <option value="sale" {% if selected_listing_type == 'sale' %}selected{% endif %}>For Sale</option>
@@ -602,62 +311,46 @@
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label><i class="fas fa-chart-line"></i> Status</label>
+                        <label>📊 Status</label>
                         <select name="status">
                             <option value="">All</option>
                             <option value="Available" {% if selected_status == 'Available' %}selected{% endif %}>Available</option>
                             <option value="Under Offer" {% if selected_status == 'Under Offer' %}selected{% endif %}>Under Offer</option>
                             <option value="Sold" {% if selected_status == 'Sold' %}selected{% endif %}>Sold</option>
-                            <option value="Rented" {% if selected_status == 'Rented' %}selected{% endif %}>Rented</option>
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label><i class="fas fa-dollar-sign"></i> Price Range</label>
+                        <label>💰 Price Range</label>
                         <div style="display: flex; gap: 10px;">
-                            <input type="number" name="min_price" placeholder="Min" value="{{ min_price if min_price > 0 else '' }}">
-                            <input type="number" name="max_price" placeholder="Max" value="{{ max_price if max_price > 0 else '' }}">
+                            <input type="number" name="min_price" placeholder="Min" value="{{ min_price or '' }}">
+                            <input type="number" name="max_price" placeholder="Max" value="{{ max_price or '' }}">
                         </div>
                     </div>
                     <div class="filter-group">
                         <label>&nbsp;</label>
-                        <button type="submit" class="btn-filter"><i class="fas fa-filter"></i> Apply Filters</button>
+                        <button type="submit" class="btn-filter">Apply Filters</button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
     
-    <!-- Properties Section -->
     <div class="properties-section">
         <div class="container">
             <h2 class="section-title">Featured Properties</h2>
-            
-            <div class="properties-grid" id="propertiesGrid">
+            <div class="properties-grid">
                 {% for property in props %}
                 <div class="property-card" onclick="openPropertyModal({{ property.id }})">
                     <div class="property-image">
-                        <div class="image-slideshow" id="slideshow-{{ property.id }}">
-                            {% if property.images and property.images|length > 0 %}
-                                {% for img in property.images[:5] %}
-                                <div class="slide {% if loop.first %}active{% endif %}">
-                                    <img src="{{ img }}" alt="{{ property.title }}">
-                                </div>
-                                {% endfor %}
-                            {% else %}
-                                <div class="slide active">
-                                    <img src="https://via.placeholder.com/400x300?text=No+Image" alt="No Image">
-                                </div>
-                            {% endif %}
-                        </div>
-                        {% if property.images and property.images|length > 1 %}
-                        <div class="slideshow-controls">
-                            <span id="slide-counter-{{ property.id }}">1/{{ property.images[:5]|length }}</span>
-                        </div>
+                        {% if property.images and property.images|length > 0 %}
+                            <img src="{{ property.images[0] }}" alt="{{ property.title }}">
+                        {% else %}
+                            <img src="https://via.placeholder.com/400x300?text=No+Image" alt="No Image">
                         {% endif %}
                         {% if property.badge %}
                         <div class="property-badge">{{ property.badge }}</div>
                         {% endif %}
-                        <div class="property-status status-{% if property.status == 'Available' %}available{% elif property.status in ['Sold','Rented','Leased'] %}sold{% else %}under-offer{% endif %}">
+                        <div class="property-status status-{% if property.status == 'Available' %}available{% else %}sold{% endif %}">
                             {{ property.status }}
                         </div>
                     </div>
@@ -666,52 +359,25 @@
                         <div class="property-price">${{ fmt_price(property.price) }}{% if property.listing_type in ['rent', 'lease'] %}/month{% endif %}</div>
                         <div class="property-details">
                             {% if property.bedrooms > 0 %}
-                            <span class="detail-item"><i class="fas fa-bed"></i> {{ property.bedrooms }}</span>
+                            <span>🛏️ {{ property.bedrooms }}</span>
                             {% endif %}
                             {% if property.bathrooms > 0 %}
-                            <span class="detail-item"><i class="fas fa-bath"></i> {{ property.bathrooms }}</span>
+                            <span>🚿 {{ property.bathrooms }}</span>
                             {% endif %}
                             {% if property.sqft > 0 %}
-                            <span class="detail-item"><i class="fas fa-arrows-alt"></i> {{ property.sqft }} sqft</span>
+                            <span>📐 {{ property.sqft }} sqft</span>
                             {% endif %}
                         </div>
                         {% if property.area %}
-                        <div class="property-location"><i class="fas fa-location-dot"></i> {{ property.area }}</div>
+                        <div>📍 {{ property.area }}</div>
                         {% endif %}
-                        <div class="property-agent">
-                            <div class="agent-avatar"><i class="fas fa-user"></i></div>
-                            <span>{{ property.agent or 'Property Manager' }}</span>
-                        </div>
+                        <div style="margin-top: 15px; color: #ffd700;">👤 {{ property.agent or 'Property Manager' }}</div>
                     </div>
                 </div>
-                
-                <!-- Slideshow JavaScript for this property -->
-                <script>
-                (function() {
-                    const container = document.getElementById('slideshow-{{ property.id }}');
-                    if (container) {
-                        const slides = container.querySelectorAll('.slide');
-                        if (slides.length > 1) {
-                            let currentIndex = 0;
-                            const counter = document.getElementById('slide-counter-{{ property.id }}');
-                            setInterval(function() {
-                                slides[currentIndex].classList.remove('active');
-                                currentIndex = (currentIndex + 1) % slides.length;
-                                slides[currentIndex].classList.add('active');
-                                if (counter) {
-                                    counter.textContent = (currentIndex + 1) + '/' + slides.length;
-                                }
-                            }, 3000);
-                        }
-                    }
-                })();
-                </script>
                 {% endfor %}
             </div>
-            
             {% if props|length == 0 %}
-            <div class="no-properties">
-                <i class="fas fa-home" style="font-size: 3em; margin-bottom: 20px; opacity: 0.5;"></i>
+            <div style="text-align: center; padding: 50px;">
                 <p>No properties found matching your criteria.</p>
                 <p><a href="/" style="color: #ffd700;">Clear filters</a></p>
             </div>
@@ -719,30 +385,17 @@
         </div>
     </div>
     
-    <!-- Footer -->
     <div class="footer">
         <div class="container">
             <div class="footer-grid">
                 <div>
                     <h3>Better Properties</h3>
-                    <p>Your trusted real estate partner in {{ config.location }}. We help you find the perfect property for your needs.</p>
-                    <div class="social-links">
-                        <a href="{{ config.facebook }}" target="_blank"><i class="fab fa-facebook-f"></i></a>
-                        <a href="{{ config.instagram }}" target="_blank"><i class="fab fa-instagram"></i></a>
-                        <a href="https://wa.me/{{ config.whatsapp }}" target="_blank"><i class="fab fa-whatsapp"></i></a>
-                    </div>
+                    <p>Your trusted real estate partner.</p>
                 </div>
                 <div>
-                    <h3>Contact Us</h3>
+                    <h3>Contact</h3>
                     <p><i class="fas fa-phone"></i> {{ config.phone }}</p>
                     <p><i class="fas fa-envelope"></i> {{ config.email }}</p>
-                    <p><i class="fab fa-whatsapp"></i> {{ config.whatsapp }}</p>
-                    <p><i class="fas fa-map-marker-alt"></i> {{ config.location }}</p>
-                </div>
-                <div>
-                    <h3>Quick Links</h3>
-                    <p><a href="/">Home</a></p>
-                    <p><a href="/admin/login">Admin Login</a></p>
                 </div>
             </div>
             <div class="copyright">
@@ -751,124 +404,58 @@
         </div>
     </div>
     
-    <!-- Property Modal -->
     <div id="propertyModal" class="modal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeModal()">&times;</span>
-            <div class="modal-body" id="modalBody">
-                <div class="loading">Loading property details...</div>
-            </div>
+            <div class="modal-body" id="modalBody">Loading...</div>
         </div>
     </div>
     
     <script>
-        let currentPropertyId = null;
-        
         async function openPropertyModal(propertyId) {
-            currentPropertyId = propertyId;
             const modal = document.getElementById('propertyModal');
             const modalBody = document.getElementById('modalBody');
             modal.style.display = 'block';
-            modalBody.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading property details...</div>';
+            modalBody.innerHTML = 'Loading...';
             
             try {
                 const response = await fetch(`/api/property/${propertyId}`);
-                if (!response.ok) throw new Error('Failed to load property');
                 const property = await response.json();
                 
-                // Build modal content
                 let imagesHtml = '';
                 if (property.images && property.images.length > 0) {
-                    imagesHtml = '<div class="modal-images">';
+                    imagesHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px;">';
                     property.images.forEach(img => {
-                        imagesHtml += `<img src="${img}" alt="${property.title}" onclick="window.open(this.src)">`;
+                        imagesHtml += `<img src="${img}" style="width:100%; height:100px; object-fit:cover; border-radius:8px;">`;
                     });
                     imagesHtml += '</div>';
-                } else {
-                    imagesHtml = '<div class="modal-images"><img src="https://via.placeholder.com/400x300?text=No+Image" alt="No Image"></div>';
                 }
                 
-                let detailsHtml = `
-                    <h1 style="font-family: 'Playfair Display', serif; margin-bottom: 15px;">${property.title}</h1>
-                    <div style="font-size: 28px; color: #ffd700; font-weight: bold; margin-bottom: 20px;">
-                        $${fmt_price(property.price)}${property.listing_type === 'rent' || property.listing_type === 'lease' ? '/month' : ''}
+                modalBody.innerHTML = `
+                    ${imagesHtml}
+                    <h2>${property.title}</h2>
+                    <div style="font-size: 24px; color: #ffd700;">$${fmt_price(property.price)}${property.listing_type === 'rent' || property.listing_type === 'lease' ? '/month' : ''}</div>
+                    <div style="margin: 20px 0;">
+                        <p><strong>📍 Location:</strong> ${property.area || 'Not specified'}</p>
+                        <p><strong>🛏️ Bedrooms:</strong> ${property.bedrooms || 0}</p>
+                        <p><strong>🚿 Bathrooms:</strong> ${property.bathrooms || 0}</p>
+                        <p><strong>📐 Square Feet:</strong> ${property.sqft || 0}</p>
+                        <p><strong>📊 Status:</strong> ${property.status || 'Available'}</p>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.05); border-radius: 10px;">
-                `;
-                
-                if (property.bedrooms > 0) detailsHtml += `<div><strong>🛏️ Bedrooms:</strong> ${property.bedrooms}</div>`;
-                if (property.bathrooms > 0) detailsHtml += `<div><strong>🚿 Bathrooms:</strong> ${property.bathrooms}</div>`;
-                if (property.sqft > 0) detailsHtml += `<div><strong>📐 Square Feet:</strong> ${property.sqft}</div>`;
-                if (property.area) detailsHtml += `<div><strong>📍 Area:</strong> ${property.area}</div>`;
-                if (property.listing_type) detailsHtml += `<div><strong>🏷️ Listing Type:</strong> ${property.listing_type}</div>`;
-                if (property.status) detailsHtml += `<div><strong>📊 Status:</strong> ${property.status}</div>`;
-                
-                detailsHtml += `</div>`;
-                
-                if (property.description) {
-                    detailsHtml += `<div style="margin: 20px 0;"><h3>Description</h3><p>${property.description}</p></div>`;
-                }
-                
-                if (property.map_url) {
-                    detailsHtml += `<div style="margin: 20px 0;"><iframe src="${property.map_url}" width="100%" height="300" style="border:0; border-radius:10px;" allowfullscreen></iframe></div>`;
-                }
-                
-                detailsHtml += `
-                    <div style="margin-top: 30px; display: flex; gap: 15px; flex-wrap: wrap;">
-                        <a href="https://wa.me/${property.phone || '{{ config.whatsapp }}'}?text=I'm interested in ${encodeURIComponent(property.title)}" class="btn-primary" style="background: #25D366; color: white; padding: 12px 25px; border-radius: 8px; text-decoration: none; display: inline-block;">
+                    <div><strong>Description:</strong><p>${property.description || 'No description available.'}</p></div>
+                    <div style="margin-top: 20px;">
+                        <a href="https://wa.me/{{ config.whatsapp }}?text=I'm interested in ${encodeURIComponent(property.title)}" style="background:#25D366; color:white; padding:10px 20px; border-radius:8px; text-decoration:none; display:inline-block;">
                             <i class="fab fa-whatsapp"></i> Inquire on WhatsApp
                         </a>
-                        <button onclick="scheduleViewing(${property.id})" class="btn-primary" style="background: #ffd700; color: #2c3e50; padding: 12px 25px; border-radius: 8px; border: none; cursor: pointer;">
-                            <i class="fas fa-calendar"></i> Schedule Viewing
-                        </button>
                     </div>
                 `;
-                
-                modalBody.innerHTML = imagesHtml + detailsHtml;
-                
             } catch (error) {
-                modalBody.innerHTML = `<div class="loading">Error loading property: ${error.message}</div>`;
+                modalBody.innerHTML = 'Error loading property details.';
             }
         }
         
         function fmt_price(price) {
             return new Intl.NumberFormat().format(price);
-        }
-        
-        async function scheduleViewing(propertyId) {
-            const name = prompt("Enter your full name:");
-            if (!name) return;
-            const email = prompt("Enter your email address:");
-            if (!email) return;
-            const phone = prompt("Enter your phone number:");
-            if (!phone) return;
-            const date = prompt("Preferred viewing date (YYYY-MM-DD):");
-            if (!date) return;
-            
-            // Get property title
-            const response = await fetch(`/api/property/${propertyId}`);
-            const property = await response.json();
-            
-            const viewingData = {
-                property: property.title,
-                name: name,
-                email: email,
-                phone: phone,
-                datetime: date
-            };
-            
-            const submitResponse = await fetch('/viewing', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(viewingData)
-            });
-            
-            if (submitResponse.ok) {
-                alert('Viewing request submitted! We will contact you shortly.');
-                closeModal();
-            } else {
-                alert('Error submitting request. Please try again.');
-            }
         }
         
         function closeModal() {
@@ -877,27 +464,16 @@
         
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
-            const btn = document.querySelector('.theme-toggle');
-            if (document.body.classList.contains('dark-mode')) {
-                btn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
-                localStorage.setItem('theme', 'dark');
-            } else {
-                btn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
-                localStorage.setItem('theme', 'light');
-            }
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
         }
         
-        // Load saved theme
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') {
             document.body.classList.add('dark-mode');
-            document.querySelector('.theme-toggle').innerHTML = '<i class="fas fa-sun"></i> Light Mode';
         }
         
-        // Close modal on outside click
         window.onclick = function(event) {
-            const modal = document.getElementById('propertyModal');
-            if (event.target == modal) {
+            if (event.target == document.getElementById('propertyModal')) {
                 closeModal();
             }
         }
