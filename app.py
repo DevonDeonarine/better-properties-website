@@ -543,82 +543,115 @@ def admin_dashboard():
         expiring_count=expiring_count, expiring_props=expiring_props,
         fmt_price=fmt_price, session=session, max_photos=MAX_PHOTOS, role=role)
 
-# ── Properties ──────────────────────────────────────────────────
+# ── Properties (ADD WITH DEBUG) ─────────────────────────────────
 @app.route("/admin/property/add", methods=["POST"])
 @login_required
 def admin_add_property():
-    f = request.form
-    property_type = f.get("property_type", "residential")
-    listing_type = f.get("listing_type", "sale")
-    username = session["username"]
+    try:
+        print("=== ADD PROPERTY DEBUG ===")
+        f = request.form
+        property_type = f.get("property_type", "residential")
+        listing_type = f.get("listing_type", "sale")
+        username = session["username"]
+        
+        print(f"Property Type: {property_type}")
+        print(f"Listing Type: {listing_type}")
+        print(f"Username: {username}")
+        
+        imgs = []
+        for i in range(1, MAX_PHOTOS + 1):
+            file = request.files.get(f"img{i}_file")
+            url = f.get(f"img{i}_url", "").strip()
+            saved = save_image(file, f.get("title", "prop"), i)
+            if saved:
+                imgs.append(saved)
+                print(f"Photo {i}: saved as {saved}")
+            elif url:
+                imgs.append(url)
+                print(f"Photo {i}: using URL {url}")
+        
+        sold_at = datetime.now().isoformat() if f.get("status") in ['Sold', 'Rented', 'Leased'] else None
+        
+        conn = get_db()
+        agent_row = conn.execute("SELECT full_name FROM users WHERE username=?", (username,)).fetchone()
+        agent_name = agent_row["full_name"] if agent_row and agent_row["full_name"] else username
+        
+        title = f.get("title", "").strip()
+        if not title:
+            flash("❌ Title is required", "error")
+            return redirect(url_for("admin_dashboard") + "#properties")
+        
+        print(f"Title: {title}")
+        print(f"Price: {f.get('price', 0)}")
+        
+        if property_type == "residential":
+            conn.execute("""INSERT INTO properties
+                (title, price, listing_type, property_type, status, description, map_url, images,
+                 featured, agent, agent_id, sold_at, area, badge,
+                 bedrooms, bathrooms, living_rooms, kitchens, garages, sqft)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                title,
+                safe_int(f.get("price", 0)),
+                listing_type,
+                property_type,
+                f.get("status", "Available"),
+                f.get("description", "").strip(),
+                f.get("map_url", "").strip(),
+                json.dumps(imgs),
+                1 if f.get("featured") else 0,
+                agent_name,
+                username,
+                sold_at,
+                f.get("area", "").strip(),
+                f.get("badge", "").strip(),
+                safe_int(f.get("bedrooms", 0)),
+                safe_int(f.get("bathrooms", 0)),
+                safe_int(f.get("living_rooms", 0)),
+                safe_int(f.get("kitchens", 0)),
+                safe_int(f.get("garages", 0)),
+                safe_int(f.get("sqft", 0))))
+        else:
+            conn.execute("""INSERT INTO properties
+                (title, price, listing_type, property_type, status, description, map_url, images,
+                 featured, agent, agent_id, sold_at, area, badge,
+                 offices, conference_rooms, bathrooms, kitchens, parking_spaces, sqft, floor_number)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                title,
+                safe_int(f.get("price", 0)),
+                listing_type,
+                property_type,
+                f.get("status", "Available"),
+                f.get("description", "").strip(),
+                f.get("map_url", "").strip(),
+                json.dumps(imgs),
+                1 if f.get("featured") else 0,
+                agent_name,
+                username,
+                sold_at,
+                f.get("area", "").strip(),
+                f.get("badge", "").strip(),
+                safe_int(f.get("offices", 0)),
+                safe_int(f.get("conference_rooms", 0)),
+                safe_int(f.get("bathrooms", 0)),
+                safe_int(f.get("kitchens", 0)),
+                safe_int(f.get("parking_spaces", 0)),
+                safe_int(f.get("sqft", 0)),
+                safe_int(f.get("floor_number", 0))))
+        
+        conn.commit()
+        conn.close()
+        print(f"✅ Property '{title}' added successfully!")
+        flash(f"✅ '{title}' added successfully!")
+        return redirect(url_for("admin_dashboard") + "#properties")
     
-    imgs = []
-    for i in range(1, MAX_PHOTOS + 1):
-        file = request.files.get(f"img{i}_file")
-        url = f.get(f"img{i}_url", "").strip()
-        saved = save_image(file, f.get("title", "prop"), i)
-        if saved:
-            imgs.append(saved)
-        elif url:
-            imgs.append(url)
-    
-    sold_at = datetime.now().isoformat() if f.get("status") in ['Sold', 'Rented', 'Leased'] else None
-    
-    conn = get_db()
-    agent_row = conn.execute("SELECT full_name FROM users WHERE username=?", (username,)).fetchone()
-    agent_name = agent_row["full_name"] if agent_row and agent_row["full_name"] else username
-    
-    base_fields = {
-        "title": f.get("title", "").strip(), "price": safe_int(f.get("price", 0)),
-        "listing_type": listing_type, "property_type": property_type,
-        "status": f.get("status", "Available"), "description": f.get("description", "").strip(),
-        "map_url": f.get("map_url", "").strip(), "images": json.dumps(imgs),
-        "featured": 1 if f.get("featured") else 0, "agent": agent_name, "agent_id": username,
-        "sold_at": sold_at, "area": f.get("area", "").strip(), "badge": f.get("badge", "").strip()
-    }
-    
-    if property_type == "residential":
-        base_fields.update({
-            "bedrooms": safe_int(f.get("bedrooms", 0)), "bathrooms": safe_int(f.get("bathrooms", 0)),
-            "living_rooms": safe_int(f.get("living_rooms", 0)), "kitchens": safe_int(f.get("kitchens", 0)),
-            "garages": safe_int(f.get("garages", 0)), "sqft": safe_int(f.get("sqft", 0))
-        })
-        conn.execute("""INSERT INTO properties
-            (title, price, listing_type, property_type, status, description, map_url, images,
-             featured, agent, agent_id, sold_at, area, badge,
-             bedrooms, bathrooms, living_rooms, kitchens, garages, sqft)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
-            base_fields["title"], base_fields["price"], base_fields["listing_type"],
-            base_fields["property_type"], base_fields["status"], base_fields["description"],
-            base_fields["map_url"], base_fields["images"], base_fields["featured"],
-            base_fields["agent"], base_fields["agent_id"], base_fields["sold_at"], 
-            base_fields["area"], base_fields["badge"], base_fields["bedrooms"], 
-            base_fields["bathrooms"], base_fields["living_rooms"], base_fields["kitchens"], 
-            base_fields["garages"], base_fields["sqft"]))
-    else:
-        base_fields.update({
-            "offices": safe_int(f.get("offices", 0)), "conference_rooms": safe_int(f.get("conference_rooms", 0)),
-            "bathrooms": safe_int(f.get("bathrooms", 0)), "kitchens": safe_int(f.get("kitchens", 0)),
-            "parking_spaces": safe_int(f.get("parking_spaces", 0)), "sqft": safe_int(f.get("sqft", 0)),
-            "floor_number": safe_int(f.get("floor_number", 0))
-        })
-        conn.execute("""INSERT INTO properties
-            (title, price, listing_type, property_type, status, description, map_url, images,
-             featured, agent, agent_id, sold_at, area, badge,
-             offices, conference_rooms, bathrooms, kitchens, parking_spaces, sqft, floor_number)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
-            base_fields["title"], base_fields["price"], base_fields["listing_type"],
-            base_fields["property_type"], base_fields["status"], base_fields["description"],
-            base_fields["map_url"], base_fields["images"], base_fields["featured"],
-            base_fields["agent"], base_fields["agent_id"], base_fields["sold_at"], 
-            base_fields["area"], base_fields["badge"], base_fields["offices"], 
-            base_fields["conference_rooms"], base_fields["bathrooms"], base_fields["kitchens"], 
-            base_fields["parking_spaces"], base_fields["sqft"], base_fields["floor_number"]))
-    
-    conn.commit()
-    conn.close()
-    flash(f"✅ '{base_fields['title']}' added successfully!")
-    return redirect(url_for("admin_dashboard") + "#properties")
+    except Exception as e:
+        import traceback
+        print("=" * 50)
+        print("ERROR IN ADD PROPERTY:")
+        print(traceback.format_exc())
+        print("=" * 50)
+        flash(f"❌ Error adding property: {str(e)}", "error")
+        return redirect(url_for("admin_dashboard") + "#properties")
 
 @app.route("/admin/property/edit/<int:pid>", methods=["POST"])
 @login_required
@@ -762,7 +795,6 @@ def admin_edit_agent(aid):
     photo = save_image(file, f.get("name", "agent"), 0) or f.get("photo_url", "").strip()
     
     conn = get_db()
-    # Get current photo if no new photo provided
     if not photo:
         current = conn.execute("SELECT photo FROM agents WHERE id=?", (aid,)).fetchone()
         if current and current["photo"]:
@@ -918,6 +950,7 @@ if __name__ == "__main__":
     ║  • Public API for property details                      ║
     ║  • CSRF Protection Enabled                              ║
     ║  • Password Change Routes Fixed (No more 404!)          ║
+    ║  • Debug logging for Add Property                       ║
     ╚══════════════════════════════════════════════════════════╝
     """)
     app.run(debug=True, port=5000)
