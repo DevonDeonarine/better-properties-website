@@ -1,20 +1,15 @@
 """
-Better Properties — Flask Backend with PostgreSQL (Supabase)
-=============================================================
+Better Properties — Flask Backend (Debug Version)
+==================================================
 Admin Login: manager / admin123
 
-This version uses:
-- PostgreSQL via Supabase (permanent data storage)
-- CSRF protection
-- Property image gallery
-- Admin dashboard
+This version uses in-memory storage - NO database required.
+Data will be lost on restart, but it's perfect for testing!
 """
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash, send_from_directory
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
 from datetime import datetime, timedelta
-import os, re, json, hashlib, secrets, threading, time
-import psycopg2
-import psycopg2.extras
+import os, json, hashlib, secrets, threading, time
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -37,218 +32,31 @@ FACEBOOK_URL    = "https://facebook.com/betterproperties"
 INSTAGRAM_URL   = "https://instagram.com/betterproperties"
 
 # ================================================================
-#  DATABASE CONNECTION (Supabase PostgreSQL)
+#  IN-MEMORY STORAGE (No database needed for testing)
 # ================================================================
-DATABASE_URL = os.environ.get('DATABASE_URL')
+properties = []
+property_id_counter = 1
 
-if not DATABASE_URL:
-    print("⚠️ WARNING: DATABASE_URL not set! Using SQLite fallback (data will be lost on redeploy)")
-    print("   Please add DATABASE_URL in Leapcell: Settings → Environment Variables")
+# Users: username -> hashed_password
+users = {
+    "manager": hash_pw("admin123"),
+    "employee1": hash_pw("emp123")
+}
 
-def get_db():
-    """Return a database connection (PostgreSQL if available, otherwise SQLite)"""
-    if DATABASE_URL:
-        return psycopg2.connect(DATABASE_URL)
-    else:
-        import sqlite3
-        conn = sqlite3.connect('/tmp/better_properties.db')
-        conn.row_factory = sqlite3.Row
-        return conn
+# Agents list
+agents = [
+    {"id": 1, "username": "employee1", "name": "John Smith", "phone": "18687654321", "email": "john@betterproperties.com", "bio": "", "photo": ""}
+]
+
+# Viewing requests
+viewing_requests = []
+
+# Analytics
+analytics = {}
 
 def hash_pw(p):
     salt = "better_properties_salt_2026"
     return hashlib.sha256((p + salt).encode()).hexdigest()
-
-def init_db():
-    """Create all tables if they don't exist"""
-    conn = get_db()
-    
-    if DATABASE_URL:
-        # PostgreSQL mode (Supabase)
-        c = conn.cursor()
-        
-        # Create users table
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                username TEXT PRIMARY KEY,
-                password TEXT NOT NULL,
-                role TEXT DEFAULT 'employee',
-                full_name TEXT DEFAULT '',
-                email TEXT DEFAULT '',
-                phone TEXT DEFAULT ''
-            )
-        """)
-        
-        # Create properties table
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS properties (
-                id SERIAL PRIMARY KEY,
-                title TEXT NOT NULL,
-                price INTEGER DEFAULT 0,
-                listing_type TEXT DEFAULT 'sale',
-                property_type TEXT DEFAULT 'residential',
-                status TEXT DEFAULT 'Available',
-                description TEXT DEFAULT '',
-                map_url TEXT DEFAULT '',
-                images TEXT DEFAULT '[]',
-                badge TEXT DEFAULT '',
-                agent TEXT DEFAULT '',
-                agent_id TEXT DEFAULT '',
-                views INTEGER DEFAULT 0,
-                inquiries INTEGER DEFAULT 0,
-                sold_at TIMESTAMP DEFAULT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                area TEXT DEFAULT '',
-                bedrooms INTEGER DEFAULT 0,
-                bathrooms INTEGER DEFAULT 0,
-                living_rooms INTEGER DEFAULT 0,
-                kitchens INTEGER DEFAULT 0,
-                garages INTEGER DEFAULT 0,
-                sqft INTEGER DEFAULT 0,
-                offices INTEGER DEFAULT 0,
-                conference_rooms INTEGER DEFAULT 0,
-                parking_spaces INTEGER DEFAULT 0,
-                floor_number INTEGER DEFAULT 0,
-                featured INTEGER DEFAULT 0
-            )
-        """)
-        
-        # Create viewing_requests table
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS viewing_requests (
-                id SERIAL PRIMARY KEY,
-                property TEXT,
-                name TEXT,
-                email TEXT,
-                phone TEXT,
-                requested_dt TEXT,
-                submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        # Create analytics table
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS analytics (
-                date TEXT PRIMARY KEY,
-                views INTEGER DEFAULT 0,
-                inquiries INTEGER DEFAULT 0
-            )
-        """)
-        
-        # Create agents table
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS agents (
-                id SERIAL PRIMARY KEY,
-                username TEXT UNIQUE,
-                name TEXT NOT NULL,
-                phone TEXT DEFAULT '',
-                email TEXT DEFAULT '',
-                photo TEXT DEFAULT '',
-                bio TEXT DEFAULT ''
-            )
-        """)
-        
-        # Insert default admin user if not exists
-        c.execute("SELECT username FROM users WHERE username='manager'")
-        if not c.fetchone():
-            c.execute("""
-                INSERT INTO users (username, password, role, full_name, email, phone)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, ("manager", hash_pw("admin123"), "manager", "System Administrator", "admin@betterproperties.com", "18681234567"))
-            
-            c.execute("""
-                INSERT INTO users (username, password, role, full_name, email, phone)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, ("employee1", hash_pw("emp123"), "employee", "John Smith", "john@betterproperties.com", "18687654321"))
-            
-            c.execute("""
-                INSERT INTO agents (username, name, phone, email)
-                VALUES (%s, %s, %s, %s)
-            """, ("employee1", "John Smith", "18687654321", "john@betterproperties.com"))
-        
-        conn.commit()
-        conn.close()
-        print("✅ PostgreSQL database ready! Data will persist permanently.")
-        
-    else:
-        # SQLite fallback (local testing only - data will be lost on redeploy)
-        import sqlite3
-        conn = sqlite3.connect('/tmp/better_properties.db')
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
-        
-        c.execute("""CREATE TABLE IF NOT EXISTS users (
-            username TEXT PRIMARY KEY,
-            password TEXT NOT NULL,
-            role TEXT DEFAULT 'employee',
-            full_name TEXT DEFAULT '',
-            email TEXT DEFAULT '',
-            phone TEXT DEFAULT ''
-        )""")
-        
-        c.execute("""CREATE TABLE IF NOT EXISTS properties (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            price INTEGER DEFAULT 0,
-            listing_type TEXT DEFAULT 'sale',
-            property_type TEXT DEFAULT 'residential',
-            status TEXT DEFAULT 'Available',
-            description TEXT DEFAULT '',
-            map_url TEXT DEFAULT '',
-            images TEXT DEFAULT '[]',
-            badge TEXT DEFAULT '',
-            agent TEXT DEFAULT '',
-            agent_id TEXT DEFAULT '',
-            views INTEGER DEFAULT 0,
-            inquiries INTEGER DEFAULT 0,
-            sold_at TEXT DEFAULT NULL,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            area TEXT DEFAULT '',
-            bedrooms INTEGER DEFAULT 0,
-            bathrooms INTEGER DEFAULT 0,
-            living_rooms INTEGER DEFAULT 0,
-            kitchens INTEGER DEFAULT 0,
-            garages INTEGER DEFAULT 0,
-            sqft INTEGER DEFAULT 0,
-            offices INTEGER DEFAULT 0,
-            conference_rooms INTEGER DEFAULT 0,
-            parking_spaces INTEGER DEFAULT 0,
-            floor_number INTEGER DEFAULT 0,
-            featured INTEGER DEFAULT 0
-        )""")
-        
-        c.execute("""CREATE TABLE IF NOT EXISTS viewing_requests (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            property TEXT, name TEXT, email TEXT, phone TEXT,
-            requested_dt TEXT, submitted_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )""")
-        
-        c.execute("""CREATE TABLE IF NOT EXISTS analytics (
-            date TEXT PRIMARY KEY, views INTEGER DEFAULT 0, inquiries INTEGER DEFAULT 0
-        )""")
-        
-        c.execute("""CREATE TABLE IF NOT EXISTS agents (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            name TEXT NOT NULL,
-            phone TEXT DEFAULT '',
-            email TEXT DEFAULT '',
-            photo TEXT DEFAULT '',
-            bio TEXT DEFAULT ''
-        )""")
-        
-        c.execute("SELECT username FROM users WHERE username='manager'")
-        if not c.fetchone():
-            c.execute("INSERT INTO users (username, password, role, full_name) VALUES (?,?,?,?)",
-                      ("manager", hash_pw("admin123"), "manager", "System Administrator"))
-            c.execute("INSERT INTO users (username, password, role, full_name) VALUES (?,?,?,?)",
-                      ("employee1", hash_pw("emp123"), "employee", "John Smith"))
-            c.execute("INSERT INTO agents (username, name, phone, email) VALUES (?,?,?,?)",
-                      ("employee1", "John Smith", "18687654321", "john@betterproperties.com"))
-        
-        conn.commit()
-        conn.close()
-        print("⚠️ Using SQLite fallback (data will be lost on redeploy)")
 
 # ================================================================
 #  CSRF PROTECTION
@@ -285,54 +93,20 @@ def safe_int(v, d=0):
         return d
 
 def get_agents():
-    conn = get_db()
-    if DATABASE_URL:
-        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        c.execute("SELECT * FROM agents ORDER BY name")
-        rows = c.fetchall()
-    else:
-        c = conn.cursor()
-        c.execute("SELECT * FROM agents ORDER BY name")
-        rows = c.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+    return agents
 
 def get_areas():
-    conn = get_db()
-    if DATABASE_URL:
-        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        c.execute("SELECT DISTINCT area FROM properties WHERE area != '' ORDER BY area")
-        rows = c.fetchall()
-    else:
-        c = conn.cursor()
-        c.execute("SELECT DISTINCT area FROM properties WHERE area != '' ORDER BY area")
-        rows = c.fetchall()
-    conn.close()
-    return [row["area"] for row in rows]
+    areas = set()
+    for p in properties:
+        if p.get("area"):
+            areas.add(p["area"])
+    return sorted(list(areas))
 
 # ================================================================
 #  PUBLIC ROUTES
 # ================================================================
 @app.route("/")
 def index():
-    conn = get_db()
-    if DATABASE_URL:
-        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        c.execute("SELECT * FROM properties ORDER BY id DESC")
-        rows = c.fetchall()
-    else:
-        c = conn.cursor()
-        c.execute("SELECT * FROM properties ORDER BY id DESC")
-        rows = c.fetchall()
-    conn.close()
-    
-    props = [dict(row) for row in rows]
-    for p in props:
-        try:
-            p["images"] = json.loads(p.get("images", "[]"))
-        except:
-            p["images"] = []
-    
     config_data = {
         "name": BUSINESS_NAME, "sub": BUSINESS_SUB, "location": BUSINESS_LOCATION,
         "email": BUSINESS_EMAIL, "phone": BUSINESS_PHONE, "whatsapp": WHATSAPP_NUMBER,
@@ -340,32 +114,21 @@ def index():
     }
     
     return render_template("index.html", 
-        props=props, 
+        props=properties, 
         config=config_data,
         fmt_price=fmt_price)
 
 @app.route("/property/<int:property_id>")
 def view_property(property_id):
     """View a single property's full details"""
-    conn = get_db()
-    if DATABASE_URL:
-        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        c.execute("SELECT * FROM properties WHERE id = %s", (property_id,))
-        row = c.fetchone()
-    else:
-        c = conn.cursor()
-        c.execute("SELECT * FROM properties WHERE id = ?", (property_id,))
-        row = c.fetchone()
-    conn.close()
+    property_data = None
+    for p in properties:
+        if p.get("id") == property_id:
+            property_data = p
+            break
     
-    if not row:
+    if not property_data:
         return "Property not found", 404
-    
-    property_data = dict(row)
-    try:
-        property_data["images"] = json.loads(property_data.get("images", "[]"))
-    except:
-        property_data["images"] = []
     
     config_data = {
         "name": BUSINESS_NAME, "sub": BUSINESS_SUB, "location": BUSINESS_LOCATION,
@@ -380,33 +143,11 @@ def view_property(property_id):
 
 @app.route("/api/property/<int:pid>")
 def get_public_property_json(pid):
-    """API endpoint for property details (used by AJAX)"""
-    try:
-        conn = get_db()
-        if DATABASE_URL:
-            c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            c.execute("SELECT * FROM properties WHERE id = %s", (pid,))
-            row = c.fetchone()
-        else:
-            c = conn.cursor()
-            c.execute("SELECT * FROM properties WHERE id = ?", (pid,))
-            row = c.fetchone()
-        conn.close()
-        
-        if not row:
-            return jsonify({"error": "Property not found"}), 404
-        
-        d = dict(row)
-        try:
-            d["images"] = json.loads(d.get("images", "[]"))
-        except:
-            d["images"] = []
-        
-        return jsonify(d)
-    
-    except Exception as e:
-        print(f"API Error: {e}")
-        return jsonify({"error": str(e)}), 500
+    """API endpoint for property details"""
+    for p in properties:
+        if p.get("id") == pid:
+            return jsonify(p)
+    return jsonify({"error": "Property not found"}), 404
 
 @app.route("/track/view/<path:title>")
 def track_view(title):
@@ -419,21 +160,15 @@ def track_inquiry(title):
 @app.route("/viewing", methods=["POST"])
 def submit_viewing():
     data = request.get_json()
-    conn = get_db()
-    if DATABASE_URL:
-        c = conn.cursor()
-        c.execute("""
-            INSERT INTO viewing_requests (property, name, email, phone, requested_dt)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (data.get("property"), data.get("name"), data.get("email"), data.get("phone"), data.get("datetime")))
-    else:
-        c = conn.cursor()
-        c.execute("""
-            INSERT INTO viewing_requests (property, name, email, phone, requested_dt)
-            VALUES (?, ?, ?, ?, ?)
-        """, (data.get("property"), data.get("name"), data.get("email"), data.get("phone"), data.get("datetime")))
-    conn.commit()
-    conn.close()
+    viewing_requests.append({
+        "id": len(viewing_requests) + 1,
+        "property": data.get("property"),
+        "name": data.get("name"),
+        "email": data.get("email"),
+        "phone": data.get("phone"),
+        "requested_dt": data.get("datetime"),
+        "submitted_at": datetime.now().isoformat()
+    })
     return jsonify({"ok": True})
 
 # ================================================================
@@ -468,26 +203,11 @@ def admin_login():
         u = request.form.get("username", "")
         p = request.form.get("password", "")
         
-        conn = get_db()
-        if DATABASE_URL:
-            c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            c.execute("SELECT * FROM users WHERE username = %s", (u,))
-            row = c.fetchone()
-        else:
-            c = conn.cursor()
-            c.execute("SELECT * FROM users WHERE username = ?", (u,))
-            row = c.fetchone()
-        conn.close()
-        
-        if row and row["password"] == hash_pw(p):
+        if u in users and users[u] == hash_pw(p):
             session["username"] = u
-            session["role"] = row["role"]
-            try:
-                full_name = row["full_name"] if row["full_name"] else u
-            except:
-                full_name = u
-            session["full_name"] = full_name
-            flash(f"✅ Welcome back, {session['full_name']}!")
+            session["role"] = "manager" if u == "manager" else "employee"
+            session["full_name"] = u
+            flash(f"✅ Welcome back, {u}!")
             return redirect(url_for("admin_dashboard"))
         flash("❌ Invalid credentials", "error")
     return render_template("admin_login.html", config={"name": BUSINESS_NAME})
@@ -501,64 +221,29 @@ def admin_logout():
 @app.route("/admin")
 @login_required
 def admin_dashboard():
-    conn = get_db()
     username = session["username"]
     role = session["role"]
     
-    if DATABASE_URL:
-        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        if role == "manager":
-            c.execute("SELECT * FROM properties ORDER BY id DESC")
-        else:
-            c.execute("SELECT * FROM properties WHERE agent_id = %s ORDER BY id DESC", (username,))
-        rows = c.fetchall()
+    # Filter properties by agent if not manager
+    if role == "manager":
+        props = properties
     else:
-        c = conn.cursor()
-        if role == "manager":
-            c.execute("SELECT * FROM properties ORDER BY id DESC")
-        else:
-            c.execute("SELECT * FROM properties WHERE agent_id = ? ORDER BY id DESC", (username,))
-        rows = c.fetchall()
+        props = [p for p in properties if p.get("agent_id") == username]
     
-    props = [dict(row) for row in rows]
-    for p in props:
-        try:
-            p["images"] = json.loads(p.get("images", "[]"))
-        except:
-            p["images"] = []
-    
-    # Get agents and users
-    agents = get_agents()
-    
-    if DATABASE_URL:
-        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        c.execute("SELECT username, role, full_name FROM users")
-        users = [dict(row) for row in c.fetchall()]
-        c.execute("SELECT * FROM viewing_requests ORDER BY id DESC")
-        requests = [dict(row) for row in c.fetchall()]
-        c.execute("SELECT * FROM analytics ORDER BY date DESC LIMIT 7")
-        days = [dict(row) for row in c.fetchall()]
-    else:
-        c = conn.cursor()
-        c.execute("SELECT username, role, full_name FROM users")
-        users = [dict(row) for row in c.fetchall()]
-        c.execute("SELECT * FROM viewing_requests ORDER BY id DESC")
-        requests = [dict(row) for row in c.fetchall()]
-        c.execute("SELECT * FROM analytics ORDER BY date DESC LIMIT 7")
-        days = [dict(row) for row in c.fetchall()]
-    
-    days = list(reversed(days))
-    
-    conn.close()
+    # Prepare analytics data
+    days = []
+    for i in range(7):
+        date = (datetime.now() - timedelta(days=6-i)).strftime("%Y-%m-%d")
+        days.append({"date": date, "views": 0, "inquiries": 0})
     
     return render_template("admin.html",
         props=props,
         agents=agents,
-        users=users,
-        requests=requests,
+        users=[{"username": u, "role": "manager" if u == "manager" else "employee", "full_name": u} for u in users.keys()],
+        requests=viewing_requests,
         analytics_days=days,
         total_props=len(props),
-        total_requests=len(requests),
+        total_requests=len(viewing_requests),
         areas=get_areas(),
         agent_names=[a["name"] for a in agents],
         config={"name": BUSINESS_NAME, "sub": BUSINESS_SUB,
@@ -573,6 +258,7 @@ def admin_dashboard():
 @app.route("/admin/property/add", methods=["POST"])
 @login_required
 def admin_add_property():
+    global property_id_counter
     try:
         f = request.form
         property_type = f.get("property_type", "residential")
@@ -588,295 +274,171 @@ def admin_add_property():
         
         sold_at = datetime.now().isoformat() if f.get("status") in ['Sold', 'Rented', 'Leased'] else None
         
-        conn = get_db()
-        
-        # Get agent name
-        if DATABASE_URL:
-            c = conn.cursor()
-            c.execute("SELECT full_name FROM users WHERE username = %s", (username,))
-            row = c.fetchone()
-        else:
-            c = conn.cursor()
-            c.execute("SELECT full_name FROM users WHERE username = ?", (username,))
-            row = c.fetchone()
-        agent_name = row[0] if row and row[0] else username
-        
         title = f.get("title", "").strip()
         if not title:
             flash("❌ Title is required", "error")
             return redirect(url_for("admin_dashboard") + "#properties")
         
-        if property_type == "residential":
-            if DATABASE_URL:
-                c.execute("""
-                    INSERT INTO properties
-                    (title, price, listing_type, property_type, status, description, map_url, images,
-                     featured, agent, agent_id, sold_at, area, badge,
-                     bedrooms, bathrooms, living_rooms, kitchens, garages, sqft)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    title, safe_int(f.get("price", 0)), listing_type, property_type,
-                    f.get("status", "Available"), f.get("description", "").strip(),
-                    f.get("map_url", "").strip(), json.dumps(imgs),
-                    1 if f.get("featured") else 0, agent_name, username, sold_at,
-                    f.get("area", "").strip(), f.get("badge", "").strip(),
-                    safe_int(f.get("bedrooms", 0)), safe_int(f.get("bathrooms", 0)),
-                    safe_int(f.get("living_rooms", 0)), safe_int(f.get("kitchens", 0)),
-                    safe_int(f.get("garages", 0)), safe_int(f.get("sqft", 0))
-                ))
-            else:
-                c.execute("""
-                    INSERT INTO properties
-                    (title, price, listing_type, property_type, status, description, map_url, images,
-                     featured, agent, agent_id, sold_at, area, badge,
-                     bedrooms, bathrooms, living_rooms, kitchens, garages, sqft)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    title, safe_int(f.get("price", 0)), listing_type, property_type,
-                    f.get("status", "Available"), f.get("description", "").strip(),
-                    f.get("map_url", "").strip(), json.dumps(imgs),
-                    1 if f.get("featured") else 0, agent_name, username, sold_at,
-                    f.get("area", "").strip(), f.get("badge", "").strip(),
-                    safe_int(f.get("bedrooms", 0)), safe_int(f.get("bathrooms", 0)),
-                    safe_int(f.get("living_rooms", 0)), safe_int(f.get("kitchens", 0)),
-                    safe_int(f.get("garages", 0)), safe_int(f.get("sqft", 0))
-                ))
-        else:
-            # Commercial property
-            if DATABASE_URL:
-                c.execute("""
-                    INSERT INTO properties
-                    (title, price, listing_type, property_type, status, description, map_url, images,
-                     featured, agent, agent_id, sold_at, area, badge,
-                     offices, conference_rooms, bathrooms, kitchens, parking_spaces, sqft, floor_number)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    title, safe_int(f.get("price", 0)), listing_type, property_type,
-                    f.get("status", "Available"), f.get("description", "").strip(),
-                    f.get("map_url", "").strip(), json.dumps(imgs),
-                    1 if f.get("featured") else 0, agent_name, username, sold_at,
-                    f.get("area", "").strip(), f.get("badge", "").strip(),
-                    safe_int(f.get("offices", 0)), safe_int(f.get("conference_rooms", 0)),
-                    safe_int(f.get("bathrooms", 0)), safe_int(f.get("kitchens", 0)),
-                    safe_int(f.get("parking_spaces", 0)), safe_int(f.get("sqft", 0)),
-                    safe_int(f.get("floor_number", 0))
-                ))
-            else:
-                c.execute("""
-                    INSERT INTO properties
-                    (title, price, listing_type, property_type, status, description, map_url, images,
-                     featured, agent, agent_id, sold_at, area, badge,
-                     offices, conference_rooms, bathrooms, kitchens, parking_spaces, sqft, floor_number)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    title, safe_int(f.get("price", 0)), listing_type, property_type,
-                    f.get("status", "Available"), f.get("description", "").strip(),
-                    f.get("map_url", "").strip(), json.dumps(imgs),
-                    1 if f.get("featured") else 0, agent_name, username, sold_at,
-                    f.get("area", "").strip(), f.get("badge", "").strip(),
-                    safe_int(f.get("offices", 0)), safe_int(f.get("conference_rooms", 0)),
-                    safe_int(f.get("bathrooms", 0)), safe_int(f.get("kitchens", 0)),
-                    safe_int(f.get("parking_spaces", 0)), safe_int(f.get("sqft", 0)),
-                    safe_int(f.get("floor_number", 0))
-                ))
+        # Get agent name
+        agent_name = username
+        for a in agents:
+            if a.get("username") == username:
+                agent_name = a.get("name", username)
+                break
         
-        conn.commit()
-        conn.close()
+        new_property = {
+            "id": property_id_counter,
+            "title": title,
+            "price": safe_int(f.get("price", 0)),
+            "listing_type": listing_type,
+            "property_type": property_type,
+            "status": f.get("status", "Available"),
+            "description": f.get("description", "").strip(),
+            "map_url": f.get("map_url", "").strip(),
+            "images": imgs,
+            "featured": 1 if f.get("featured") else 0,
+            "agent": agent_name,
+            "agent_id": username,
+            "sold_at": sold_at,
+            "area": f.get("area", "").strip(),
+            "badge": f.get("badge", "").strip(),
+            "bedrooms": safe_int(f.get("bedrooms", 0)),
+            "bathrooms": safe_int(f.get("bathrooms", 0)),
+            "living_rooms": safe_int(f.get("living_rooms", 0)),
+            "kitchens": safe_int(f.get("kitchens", 0)),
+            "garages": safe_int(f.get("garages", 0)),
+            "sqft": safe_int(f.get("sqft", 0)),
+            "offices": safe_int(f.get("offices", 0)),
+            "conference_rooms": safe_int(f.get("conference_rooms", 0)),
+            "parking_spaces": safe_int(f.get("parking_spaces", 0)),
+            "floor_number": safe_int(f.get("floor_number", 0)),
+            "created_at": datetime.now().isoformat(),
+            "views": 0,
+            "inquiries": 0
+        }
+        
+        properties.append(new_property)
+        property_id_counter += 1
+        
         flash(f"✅ '{title}' added successfully!")
         return redirect(url_for("admin_dashboard") + "#properties")
     
     except Exception as e:
-        import traceback
-        print(traceback.format_exc())
         flash(f"❌ Error adding property: {str(e)}", "error")
         return redirect(url_for("admin_dashboard") + "#properties")
 
 @app.route("/admin/property/edit/<int:pid>", methods=["POST"])
 @login_required
 def admin_edit_property(pid):
-    f = request.form
-    conn = get_db()
+    try:
+        # Find the property
+        old_property = None
+        old_index = None
+        for i, p in enumerate(properties):
+            if p.get("id") == pid:
+                old_property = p
+                old_index = i
+                break
+        
+        if not old_property:
+            flash("❌ Property not found", "error")
+            return redirect(url_for("admin_dashboard") + "#properties")
+        
+        f = request.form
+        property_type = f.get("property_type", old_property.get("property_type", "residential"))
+        listing_type = f.get("listing_type", old_property.get("listing_type", "sale"))
+        
+        # Collect images
+        old_imgs = old_property.get("images", [])
+        imgs = []
+        for i in range(1, MAX_PHOTOS + 1):
+            url = f.get(f"img{i}_url", "").strip()
+            if url:
+                imgs.append(url)
+            elif len(old_imgs) >= i:
+                imgs.append(old_imgs[i-1])
+        
+        status = f.get("status", "Available")
+        sold_at = old_property.get("sold_at") if status in ['Sold', 'Rented', 'Leased'] and old_property.get("sold_at") else (datetime.now().isoformat() if status in ['Sold', 'Rented', 'Leased'] else None)
+        
+        updated_property = {
+            "id": pid,
+            "title": f.get("title", "").strip(),
+            "price": safe_int(f.get("price", 0)),
+            "listing_type": listing_type,
+            "property_type": property_type,
+            "status": status,
+            "description": f.get("description", "").strip(),
+            "map_url": f.get("map_url", "").strip(),
+            "images": imgs,
+            "featured": 1 if f.get("featured") else 0,
+            "agent": old_property.get("agent", ""),
+            "agent_id": old_property.get("agent_id", ""),
+            "sold_at": sold_at,
+            "area": f.get("area", "").strip(),
+            "badge": f.get("badge", "").strip(),
+            "bedrooms": safe_int(f.get("bedrooms", 0)),
+            "bathrooms": safe_int(f.get("bathrooms", 0)),
+            "living_rooms": safe_int(f.get("living_rooms", 0)),
+            "kitchens": safe_int(f.get("kitchens", 0)),
+            "garages": safe_int(f.get("garages", 0)),
+            "sqft": safe_int(f.get("sqft", 0)),
+            "offices": safe_int(f.get("offices", 0)),
+            "conference_rooms": safe_int(f.get("conference_rooms", 0)),
+            "parking_spaces": safe_int(f.get("parking_spaces", 0)),
+            "floor_number": safe_int(f.get("floor_number", 0)),
+            "created_at": old_property.get("created_at", datetime.now().isoformat()),
+            "views": old_property.get("views", 0),
+            "inquiries": old_property.get("inquiries", 0)
+        }
+        
+        properties[old_index] = updated_property
+        flash(f"✅ Property updated!")
+        return redirect(url_for("admin_dashboard") + "#properties")
     
-    # Get old property data
-    if DATABASE_URL:
-        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        c.execute("SELECT * FROM properties WHERE id = %s", (pid,))
-        old = c.fetchone()
-    else:
-        c = conn.cursor()
-        c.execute("SELECT * FROM properties WHERE id = ?", (pid,))
-        old = c.fetchone()
-    
-    if not old:
-        conn.close()
-        flash("❌ Property not found")
-        return redirect(url_for("admin_dashboard"))
-    
-    property_type = f.get("property_type", old["property_type"])
-    listing_type = f.get("listing_type", old["listing_type"])
-    
-    # Collect images
-    old_imgs = json.loads(old["images"]) if isinstance(old["images"], str) else (old["images"] or [])
-    imgs = []
-    for i in range(1, MAX_PHOTOS + 1):
-        url = f.get(f"img{i}_url", "").strip()
-        if url:
-            imgs.append(url)
-        elif len(old_imgs) >= i:
-            imgs.append(old_imgs[i-1])
-    
-    status = f.get("status", "Available")
-    sold_at = old["sold_at"] if status in ['Sold', 'Rented', 'Leased'] and old["sold_at"] else (datetime.now().isoformat() if status in ['Sold', 'Rented', 'Leased'] else None)
-    
-    if DATABASE_URL:
-        if property_type == "residential":
-            c.execute("""
-                UPDATE properties SET
-                    title=%s, price=%s, listing_type=%s, property_type=%s, status=%s,
-                    description=%s, map_url=%s, images=%s, featured=%s, sold_at=%s,
-                    area=%s, badge=%s, bedrooms=%s, bathrooms=%s, living_rooms=%s,
-                    kitchens=%s, garages=%s, sqft=%s
-                WHERE id=%s
-            """, (
-                f.get("title", "").strip(), safe_int(f.get("price", 0)), listing_type, property_type, status,
-                f.get("description", "").strip(), f.get("map_url", "").strip(), json.dumps(imgs),
-                1 if f.get("featured") else 0, sold_at, f.get("area", "").strip(), f.get("badge", "").strip(),
-                safe_int(f.get("bedrooms", 0)), safe_int(f.get("bathrooms", 0)),
-                safe_int(f.get("living_rooms", 0)), safe_int(f.get("kitchens", 0)),
-                safe_int(f.get("garages", 0)), safe_int(f.get("sqft", 0)), pid
-            ))
-        else:
-            c.execute("""
-                UPDATE properties SET
-                    title=%s, price=%s, listing_type=%s, property_type=%s, status=%s,
-                    description=%s, map_url=%s, images=%s, featured=%s, sold_at=%s,
-                    area=%s, badge=%s, offices=%s, conference_rooms=%s, bathrooms=%s,
-                    kitchens=%s, parking_spaces=%s, sqft=%s, floor_number=%s
-                WHERE id=%s
-            """, (
-                f.get("title", "").strip(), safe_int(f.get("price", 0)), listing_type, property_type, status,
-                f.get("description", "").strip(), f.get("map_url", "").strip(), json.dumps(imgs),
-                1 if f.get("featured") else 0, sold_at, f.get("area", "").strip(), f.get("badge", "").strip(),
-                safe_int(f.get("offices", 0)), safe_int(f.get("conference_rooms", 0)),
-                safe_int(f.get("bathrooms", 0)), safe_int(f.get("kitchens", 0)),
-                safe_int(f.get("parking_spaces", 0)), safe_int(f.get("sqft", 0)),
-                safe_int(f.get("floor_number", 0)), pid
-            ))
-    else:
-        if property_type == "residential":
-            c.execute("""
-                UPDATE properties SET
-                    title=?, price=?, listing_type=?, property_type=?, status=?,
-                    description=?, map_url=?, images=?, featured=?, sold_at=?,
-                    area=?, badge=?, bedrooms=?, bathrooms=?, living_rooms=?,
-                    kitchens=?, garages=?, sqft=?
-                WHERE id=?
-            """, (
-                f.get("title", "").strip(), safe_int(f.get("price", 0)), listing_type, property_type, status,
-                f.get("description", "").strip(), f.get("map_url", "").strip(), json.dumps(imgs),
-                1 if f.get("featured") else 0, sold_at, f.get("area", "").strip(), f.get("badge", "").strip(),
-                safe_int(f.get("bedrooms", 0)), safe_int(f.get("bathrooms", 0)),
-                safe_int(f.get("living_rooms", 0)), safe_int(f.get("kitchens", 0)),
-                safe_int(f.get("garages", 0)), safe_int(f.get("sqft", 0)), pid
-            ))
-        else:
-            c.execute("""
-                UPDATE properties SET
-                    title=?, price=?, listing_type=?, property_type=?, status=?,
-                    description=?, map_url=?, images=?, featured=?, sold_at=?,
-                    area=?, badge=?, offices=?, conference_rooms=?, bathrooms=?,
-                    kitchens=?, parking_spaces=?, sqft=?, floor_number=?
-                WHERE id=?
-            """, (
-                f.get("title", "").strip(), safe_int(f.get("price", 0)), listing_type, property_type, status,
-                f.get("description", "").strip(), f.get("map_url", "").strip(), json.dumps(imgs),
-                1 if f.get("featured") else 0, sold_at, f.get("area", "").strip(), f.get("badge", "").strip(),
-                safe_int(f.get("offices", 0)), safe_int(f.get("conference_rooms", 0)),
-                safe_int(f.get("bathrooms", 0)), safe_int(f.get("kitchens", 0)),
-                safe_int(f.get("parking_spaces", 0)), safe_int(f.get("sqft", 0)),
-                safe_int(f.get("floor_number", 0)), pid
-            ))
-    
-    conn.commit()
-    conn.close()
-    flash(f"✅ Property updated!")
-    return redirect(url_for("admin_dashboard") + "#properties")
+    except Exception as e:
+        flash(f"❌ Error updating property: {str(e)}", "error")
+        return redirect(url_for("admin_dashboard") + "#properties")
 
 @app.route("/admin/property/delete/<int:pid>", methods=["POST"])
 @login_required
 def admin_delete_property(pid):
-    conn = get_db()
-    if DATABASE_URL:
-        c = conn.cursor()
-        c.execute("DELETE FROM properties WHERE id = %s", (pid,))
-    else:
-        c = conn.cursor()
-        c.execute("DELETE FROM properties WHERE id = ?", (pid,))
-    conn.commit()
-    conn.close()
+    global properties
+    properties = [p for p in properties if p.get("id") != pid]
     flash(f"✅ Property removed.")
     return redirect(url_for("admin_dashboard") + "#properties")
 
 @app.route("/admin/property/<int:pid>/json")
 @login_required
 def get_property_json(pid):
-    conn = get_db()
-    if DATABASE_URL:
-        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        c.execute("SELECT * FROM properties WHERE id = %s", (pid,))
-        row = c.fetchone()
-    else:
-        c = conn.cursor()
-        c.execute("SELECT * FROM properties WHERE id = ?", (pid,))
-        row = c.fetchone()
-    conn.close()
-    
-    if not row:
-        return jsonify({}), 404
-    d = dict(row)
-    try:
-        d["images"] = json.loads(d.get("images", "[]"))
-    except:
-        d["images"] = []
-    return jsonify(d)
+    for p in properties:
+        if p.get("id") == pid:
+            return jsonify(p)
+    return jsonify({}), 404
 
 # ── Agents ──────────────────────────────────────────────────────
 @app.route("/admin/agent/add", methods=["POST"])
 @mgr_required
 def admin_add_agent():
     f = request.form
-    conn = get_db()
-    if DATABASE_URL:
-        c = conn.cursor()
-        c.execute("""
-            INSERT INTO agents (name, phone, email, bio)
-            VALUES (%s, %s, %s, %s)
-        """, (f.get("name", "").strip(), f.get("phone", "").strip(),
-              f.get("email", "").strip(), f.get("bio", "").strip()))
-    else:
-        c = conn.cursor()
-        c.execute("""
-            INSERT INTO agents (name, phone, email, bio)
-            VALUES (?, ?, ?, ?)
-        """, (f.get("name", "").strip(), f.get("phone", "").strip(),
-              f.get("email", "").strip(), f.get("bio", "").strip()))
-    conn.commit()
-    conn.close()
+    new_id = len(agents) + 1
+    agents.append({
+        "id": new_id,
+        "username": f.get("username", f"agent_{new_id}"),
+        "name": f.get("name", "").strip(),
+        "phone": f.get("phone", "").strip(),
+        "email": f.get("email", "").strip(),
+        "bio": f.get("bio", "").strip(),
+        "photo": ""
+    })
     flash(f"✅ Agent '{f.get('name')}' added.")
     return redirect(url_for("admin_dashboard") + "#agents")
 
 @app.route("/admin/agent/delete/<int:aid>", methods=["POST"])
 @mgr_required
 def admin_delete_agent(aid):
-    conn = get_db()
-    if DATABASE_URL:
-        c = conn.cursor()
-        c.execute("DELETE FROM agents WHERE id = %s", (aid,))
-    else:
-        c = conn.cursor()
-        c.execute("DELETE FROM agents WHERE id = ?", (aid,))
-    conn.commit()
-    conn.close()
+    global agents
+    agents = [a for a in agents if a.get("id") != aid]
     flash("✅ Agent removed.")
     return redirect(url_for("admin_dashboard") + "#agents")
 
@@ -884,23 +446,13 @@ def admin_delete_agent(aid):
 @mgr_required
 def admin_edit_agent(aid):
     f = request.form
-    conn = get_db()
-    if DATABASE_URL:
-        c = conn.cursor()
-        c.execute("""
-            UPDATE agents SET name=%s, phone=%s, email=%s, bio=%s
-            WHERE id=%s
-        """, (f.get("name", "").strip(), f.get("phone", "").strip(),
-              f.get("email", "").strip(), f.get("bio", "").strip(), aid))
-    else:
-        c = conn.cursor()
-        c.execute("""
-            UPDATE agents SET name=?, phone=?, email=?, bio=?
-            WHERE id=?
-        """, (f.get("name", "").strip(), f.get("phone", "").strip(),
-              f.get("email", "").strip(), f.get("bio", "").strip(), aid))
-    conn.commit()
-    conn.close()
+    for i, a in enumerate(agents):
+        if a.get("id") == aid:
+            agents[i]["name"] = f.get("name", "").strip()
+            agents[i]["phone"] = f.get("phone", "").strip()
+            agents[i]["email"] = f.get("email", "").strip()
+            agents[i]["bio"] = f.get("bio", "").strip()
+            break
     flash(f"✅ Agent '{f.get('name')}' updated.")
     return redirect(url_for("admin_dashboard") + "#agents")
 
@@ -909,29 +461,19 @@ def admin_edit_agent(aid):
 @mgr_required
 def admin_add_user():
     f = request.form
-    conn = get_db()
-    try:
-        if DATABASE_URL:
-            c = conn.cursor()
-            c.execute("""
-                INSERT INTO users (username, password, role, full_name, email, phone)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (f.get("username", "").strip(), hash_pw(f.get("password", "")),
-                  f.get("role", "employee"), f.get("full_name", "").strip(),
-                  f.get("email", "").strip(), f.get("phone", "").strip()))
-        else:
-            c = conn.cursor()
-            c.execute("""
-                INSERT INTO users (username, password, role, full_name, email, phone)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (f.get("username", "").strip(), hash_pw(f.get("password", "")),
-                  f.get("role", "employee"), f.get("full_name", "").strip(),
-                  f.get("email", "").strip(), f.get("phone", "").strip()))
-        conn.commit()
-        flash(f"✅ User '{f.get('username')}' created.")
-    except Exception as e:
-        flash(f"❌ Username already exists.")
-    conn.close()
+    username = f.get("username", "").strip()
+    password = f.get("password", "")
+    
+    if not username or not password:
+        flash("❌ Username and password required", "error")
+        return redirect(url_for("admin_dashboard") + "#users")
+    
+    if username in users:
+        flash("❌ Username already exists", "error")
+        return redirect(url_for("admin_dashboard") + "#users")
+    
+    users[username] = hash_pw(password)
+    flash(f"✅ User '{username}' created.")
     return redirect(url_for("admin_dashboard") + "#users")
 
 @app.route("/admin/user/delete/<username>", methods=["POST"])
@@ -940,18 +482,10 @@ def admin_delete_user(username):
     if username == "manager":
         flash("❌ Cannot delete main manager.")
         return redirect(url_for("admin_dashboard") + "#users")
-    conn = get_db()
-    if DATABASE_URL:
-        c = conn.cursor()
-        c.execute("DELETE FROM users WHERE username = %s", (username,))
-        c.execute("DELETE FROM agents WHERE username = %s", (username,))
-    else:
-        c = conn.cursor()
-        c.execute("DELETE FROM users WHERE username = ?", (username,))
-        c.execute("DELETE FROM agents WHERE username = ?", (username,))
-    conn.commit()
-    conn.close()
-    flash(f"✅ User '{username}' removed.")
+    
+    if username in users:
+        del users[username]
+        flash(f"✅ User '{username}' removed.")
     return redirect(url_for("admin_dashboard") + "#users")
 
 @app.route("/admin/user/password", methods=["POST"])
@@ -969,17 +503,12 @@ def admin_change_password():
         flash("❌ Password must be at least 4 characters", "error")
         return redirect(url_for("admin_dashboard") + "#users")
     
-    conn = get_db()
-    if DATABASE_URL:
-        c = conn.cursor()
-        c.execute("UPDATE users SET password = %s WHERE username = %s", (hash_pw(new_password), username))
+    if username in users:
+        users[username] = hash_pw(new_password)
+        flash(f"✅ Password updated for '{username}'!", "success")
     else:
-        c = conn.cursor()
-        c.execute("UPDATE users SET password = ? WHERE username = ?", (hash_pw(new_password), username))
-    conn.commit()
-    conn.close()
+        flash(f"❌ User '{username}' not found", "error")
     
-    flash(f"✅ Password updated for '{username}'!", "success")
     return redirect(url_for("admin_dashboard") + "#users")
 
 @app.route("/admin/user/change_my_password", methods=["POST"])
@@ -1002,82 +531,38 @@ def change_my_password():
         flash("❌ Password must be at least 8 characters", "error")
         return redirect(url_for("admin_dashboard") + "#settings")
     
-    conn = get_db()
-    if DATABASE_URL:
-        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        c.execute("SELECT * FROM users WHERE username = %s", (username,))
-        row = c.fetchone()
-    else:
-        c = conn.cursor()
-        c.execute("SELECT * FROM users WHERE username = ?", (username,))
-        row = c.fetchone()
-    
-    if not row or row["password"] != hash_pw(current):
-        flash("❌ Current password is incorrect", "error")
-    else:
-        if DATABASE_URL:
-            c = conn.cursor()
-            c.execute("UPDATE users SET password = %s WHERE username = %s", (hash_pw(new_password), username))
-        else:
-            c = conn.cursor()
-            c.execute("UPDATE users SET password = ? WHERE username = ?", (hash_pw(new_password), username))
-        conn.commit()
+    if username in users and users[username] == hash_pw(current):
+        users[username] = hash_pw(new_password)
         flash(f"✅ Your password has been updated!", "success")
+    else:
+        flash("❌ Current password is incorrect", "error")
     
-    conn.close()
     return redirect(url_for("admin_dashboard") + "#settings")
 
 # ================================================================
 #  AUTO-CLEANUP THREAD (for sold/rented properties)
 # ================================================================
 def auto_cleanup():
+    global properties
     while True:
         try:
-            conn = get_db()
-            cutoff = (datetime.now() - timedelta(days=SOLD_EXPIRY_DAYS)).isoformat()
+            now = datetime.now()
+            cutoff = now - timedelta(days=SOLD_EXPIRY_DAYS)
+            expired = []
             
-            if DATABASE_URL:
-                c = conn.cursor()
-                c.execute("""
-                    UPDATE properties SET sold_at = %s
-                    WHERE status IN ('Sold', 'Rented', 'Leased') AND (sold_at IS NULL OR sold_at = '')
-                """, (datetime.now().isoformat(),))
-                
-                c.execute("""
-                    SELECT id, title, sold_at FROM properties
-                    WHERE status IN ('Sold', 'Rented', 'Leased') AND sold_at < %s
-                """, (cutoff,))
-                rows = c.fetchall()
-                
-                for r in rows:
-                    c.execute("DELETE FROM properties WHERE id = %s", (r[0],))
-                    print(f"Auto-deleted: {r[1]}")
-                
-                if rows:
-                    conn.commit()
-                    print(f"[Auto-cleanup] Deleted {len(rows)} expired listings")
-            else:
-                c = conn.cursor()
-                c.execute("""
-                    UPDATE properties SET sold_at = ?
-                    WHERE status IN ('Sold', 'Rented', 'Leased') AND (sold_at IS NULL OR sold_at = '')
-                """, (datetime.now().isoformat(),))
-                
-                c.execute("""
-                    SELECT id, title, sold_at FROM properties
-                    WHERE status IN ('Sold', 'Rented', 'Leased') AND sold_at < ?
-                """, (cutoff,))
-                rows = c.fetchall()
-                
-                for r in rows:
-                    c.execute("DELETE FROM properties WHERE id = ?", (r[0],))
-                    print(f"Auto-deleted: {r[1]}")
-                
-                if rows:
-                    conn.commit()
-                    print(f"[Auto-cleanup] Deleted {len(rows)} expired listings")
+            for p in properties:
+                if p.get("status") in ['Sold', 'Rented', 'Leased'] and p.get("sold_at"):
+                    try:
+                        sold_at = datetime.fromisoformat(p["sold_at"])
+                        if sold_at < cutoff:
+                            expired.append(p)
+                    except:
+                        pass
             
-            conn.close()
+            if expired:
+                properties = [p for p in properties if p not in expired]
+                print(f"[Auto-cleanup] Deleted {len(expired)} expired listings")
+        
         except Exception as e:
             print(f"[Auto-cleanup] Error: {e}")
         time.sleep(AUTO_CLEANUP_HOURS * 3600)
@@ -1091,7 +576,6 @@ print(f"[System] Auto-cleanup active - will delete after {SOLD_EXPIRY_DAYS} days
 #  STARTUP
 # ================================================================
 if __name__ == "__main__":
-    init_db()
     print(f"""
     ╔══════════════════════════════════════════════════════════╗
     ║     Better Properties - Real Estate Management System    ║
@@ -1100,8 +584,8 @@ if __name__ == "__main__":
     ║  Admin:      http://127.0.0.1:5000/admin                 ║
     ║  Login:      manager / admin123                          ║
     ╠══════════════════════════════════════════════════════════╣
-    ║  Database:   {'PostgreSQL (Supabase) - PERSISTENT' if DATABASE_URL else 'SQLite (temporary)'}
-    ║  Data will survive redeploys: {'YES ✅' if DATABASE_URL else 'NO ⚠️'}
+    ║  Storage:    In-Memory (Debug Mode)                      ║
+    ║  NOTE: Data will be lost when the app restarts!          ║
     ╚══════════════════════════════════════════════════════════╝
     """)
     app.run(debug=True, port=5000)
