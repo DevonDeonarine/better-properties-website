@@ -17,25 +17,21 @@ app = Flask(__name__)
 # ================================================================
 #  CONFIG — edit before deploying
 # ================================================================
-# Use environment variable for secret key (works on Leapcell)
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 
 # ================================================================
-#  CSRF PROTECTION - FIXED
+#  CSRF PROTECTION
 # ================================================================
 def get_csrf_token():
-    """Generate or retrieve CSRF token for form protection"""
     if 'csrf_token' not in session:
         session['csrf_token'] = secrets.token_hex(32)
     return session['csrf_token']
 
 @app.context_processor
 def inject_csrf():
-    """Make csrf_token available in all templates"""
     return dict(csrf_token=get_csrf_token)
 
 def validate_csrf():
-    """Validate CSRF token from POST requests"""
     form_token = request.form.get('_csrf')
     session_token = session.get('csrf_token')
     if not form_token or not session_token or form_token != session_token:
@@ -53,18 +49,29 @@ AUTO_CLEANUP_HOURS = 1
 MAX_PHOTOS = 21
 
 # ================================================================
-#  PERSISTENT STORAGE - FIXED FOR LEAPCELL
-#  Data will NOT be deleted on redeploys!
+#  STORAGE - Works with or without persistent volume
 # ================================================================
-# Create /data directory if it doesn't exist (Leapcell persistent volume)
-DATA_DIR = '/data'
+# Try to use /data if it exists and is writable, otherwise fall back to /tmp
+PERSISTENT_DIR = '/data'
+TEMP_DIR = '/tmp'
+
+# Check if persistent storage is available
+if os.path.exists(PERSISTENT_DIR) and os.access(PERSISTENT_DIR, os.W_OK):
+    DATA_DIR = PERSISTENT_DIR
+    print(f"✅ Using PERSISTENT storage at: {DATA_DIR} (data will survive redeploys)")
+else:
+    DATA_DIR = TEMP_DIR
+    print(f"⚠️ WARNING: Using TEMPORARY storage at: {DATA_DIR}")
+    print(f"   Data will be LOST on redeploy! Add a persistent volume mounted at /data")
+
+# Create directories
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# Database path - Use persistent /data directory
+# Database path
 DB_PATH = os.path.join(DATA_DIR, 'better_properties.db')
 print(f"Database path: {DB_PATH}")
 
-# Upload directory - Use persistent /data/uploads
+# Upload directory
 UPLOAD_DIR = os.path.join(DATA_DIR, 'uploads')
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 print(f"Upload directory: {UPLOAD_DIR}")
@@ -155,14 +162,13 @@ def init_db():
         email TEXT DEFAULT '', photo TEXT DEFAULT '', bio TEXT DEFAULT ''
     )""")
     
-    # Check if admin user exists before inserting
+    # Check if admin user exists
     existing = c.execute("SELECT username FROM users WHERE username='manager'").fetchone()
     if not existing:
         admin_password = hash_pw("admin123")
         c.execute("INSERT INTO users (username, password, role, full_name, email, phone) VALUES (?,?,?,?,?,?)", 
                   ("manager", admin_password, "manager", "System Administrator", "admin@betterproperties.com", "18681234567"))
         
-        # Create sample agent only if database is new
         agent_password = hash_pw("emp123")
         c.execute("INSERT OR IGNORE INTO users (username, password, role, full_name, email, phone) VALUES (?,?,?,?,?,?)", 
                   ("employee1", agent_password, "employee", "John Smith", "john@betterproperties.com", "18687654321"))
@@ -171,9 +177,8 @@ def init_db():
     
     conn.commit()
     
-    # Count existing properties
     count = c.execute("SELECT COUNT(*) FROM properties").fetchone()[0]
-    print(f"Database initialized. Existing properties: {count}")
+    print(f"Database ready. Existing properties: {count}")
     
     conn.close()
 
@@ -227,7 +232,7 @@ def auto_cleanup():
             
             for r in rows:
                 conn.execute("DELETE FROM properties WHERE id=?", (r["id"],))
-                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Auto-deleted: {r['title']}")
+                print(f"Auto-deleted: {r['title']}")
             
             if rows:
                 conn.commit()
@@ -322,7 +327,6 @@ def save_image(file, title, idx):
     fname = f"{safe}_{idx}_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
     path = os.path.join(UPLOAD_DIR, fname)
     file.save(path)
-    print(f"Image saved to: {path}")
     return f"/uploads/{fname}"
 
 def get_expiry_stats():
@@ -467,7 +471,6 @@ def mgr_required(f):
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
-        # Validate CSRF token - FIXED
         if not validate_csrf():
             flash("❌ Invalid security token. Please try again.", "error")
             return redirect(url_for("admin_login"))
@@ -553,20 +556,15 @@ def admin_dashboard():
         expiring_count=expiring_count, expiring_props=expiring_props,
         fmt_price=fmt_price, session=session, max_photos=MAX_PHOTOS, role=role)
 
-# ── Properties (ADD WITH DEBUG) ─────────────────────────────────
+# ── Properties ─────────────────────────────────────────────────
 @app.route("/admin/property/add", methods=["POST"])
 @login_required
 def admin_add_property():
     try:
-        print("=== ADD PROPERTY DEBUG ===")
         f = request.form
         property_type = f.get("property_type", "residential")
         listing_type = f.get("listing_type", "sale")
         username = session["username"]
-        
-        print(f"Property Type: {property_type}")
-        print(f"Listing Type: {listing_type}")
-        print(f"Username: {username}")
         
         imgs = []
         for i in range(1, MAX_PHOTOS + 1):
@@ -575,10 +573,8 @@ def admin_add_property():
             saved = save_image(file, f.get("title", "prop"), i)
             if saved:
                 imgs.append(saved)
-                print(f"Photo {i}: saved as {saved}")
             elif url:
                 imgs.append(url)
-                print(f"Photo {i}: using URL {url}")
         
         sold_at = datetime.now().isoformat() if f.get("status") in ['Sold', 'Rented', 'Leased'] else None
         
@@ -590,9 +586,6 @@ def admin_add_property():
         if not title:
             flash("❌ Title is required", "error")
             return redirect(url_for("admin_dashboard") + "#properties")
-        
-        print(f"Title: {title}")
-        print(f"Price: {f.get('price', 0)}")
         
         if property_type == "residential":
             conn.execute("""INSERT INTO properties
@@ -650,16 +643,12 @@ def admin_add_property():
         
         conn.commit()
         conn.close()
-        print(f"✅ Property '{title}' added successfully!")
         flash(f"✅ '{title}' added successfully!")
         return redirect(url_for("admin_dashboard") + "#properties")
     
     except Exception as e:
         import traceback
-        print("=" * 50)
-        print("ERROR IN ADD PROPERTY:")
         print(traceback.format_exc())
-        print("=" * 50)
         flash(f"❌ Error adding property: {str(e)}", "error")
         return redirect(url_for("admin_dashboard") + "#properties")
 
@@ -771,7 +760,7 @@ def admin_delete_property(pid):
     flash(f"✅ '{row['title']}' removed.")
     return redirect(url_for("admin_dashboard") + "#properties")
 
-# ── Agents (Manager only) ──────────────────────────────────────
+# ── Agents ──────────────────────────────────────────────────────
 @app.route("/admin/agent/add", methods=["POST"])
 @mgr_required
 def admin_add_agent():
@@ -818,7 +807,7 @@ def admin_edit_agent(aid):
     flash(f"✅ Agent '{f.get('name')}' updated.")
     return redirect(url_for("admin_dashboard") + "#agents")
 
-# ── Users (Manager only) ────────────────────────────────────────
+# ── Users ────────────────────────────────────────────────────────
 @app.route("/admin/user/add", methods=["POST"])
 @mgr_required
 def admin_add_user():
@@ -854,9 +843,7 @@ def admin_delete_user(username):
     flash(f"✅ User '{username}' removed.")
     return redirect(url_for("admin_dashboard") + "#users")
 
-# ── Change Password Routes - FIXED 404 ERRORS ─────────────────────
-
-# Route 1: Manager changes ANY user's password (used by password modal)
+# ── Change Password Routes ─────────────────────────────────────
 @app.route("/admin/user/password", methods=["POST"])
 @mgr_required
 def admin_change_password():
@@ -880,7 +867,6 @@ def admin_change_password():
     flash(f"✅ Password updated for '{username}'!", "success")
     return redirect(url_for("admin_dashboard") + "#users")
 
-# Route 2: User changes THEIR OWN password (used by My Password tab)
 @app.route("/admin/user/change_my_password", methods=["POST"])
 @login_required
 def change_my_password():
@@ -889,17 +875,14 @@ def change_my_password():
     new_password = request.form.get("new_password", "")
     confirm = request.form.get("confirm_password", "")
     
-    # Validate CSRF
     if not validate_csrf():
         flash("❌ Invalid security token. Please try again.", "error")
         return redirect(url_for("admin_dashboard") + "#settings")
     
-    # Check passwords match
     if new_password != confirm:
         flash("❌ New passwords do not match", "error")
         return redirect(url_for("admin_dashboard") + "#settings")
     
-    # Check minimum length
     if len(new_password) < 8:
         flash("❌ Password must be at least 8 characters", "error")
         return redirect(url_for("admin_dashboard") + "#settings")
@@ -917,17 +900,15 @@ def change_my_password():
     conn.close()
     return redirect(url_for("admin_dashboard") + "#settings")
 
-# ── Serve uploaded files from /data/uploads ────────────────────────
+# ── Serve uploaded files ────────────────────────────────────────
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    """Serve uploaded files from /data/uploads directory"""
     try:
         return send_from_directory(UPLOAD_DIR, filename)
     except Exception as e:
-        print(f"Error serving file {filename}: {e}")
         return "File not found", 404
 
-# ── API for property data ────────────────────────────────────────
+# ── API ────────────────────────────────────────────────────────
 @app.route("/admin/property/<int:pid>/json")
 @login_required
 def get_property_json(pid):
@@ -952,19 +933,6 @@ def get_public_property_json(pid):
     return jsonify(d)
 
 if __name__ == "__main__":
-    # Verify directories exist
-    os.makedirs(DATA_DIR, exist_ok=True)
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    
-    # Check if database has data
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        count = conn.execute("SELECT COUNT(*) FROM properties").fetchone()[0]
-        conn.close()
-        print(f"Current properties in database: {count}")
-    except:
-        print("Database not yet initialized")
-    
     print(f"""
     ╔══════════════════════════════════════════════════════════╗
     ║     Better Properties - Real Estate Management System    ║
@@ -973,19 +941,7 @@ if __name__ == "__main__":
     ║  Admin:      http://127.0.0.1:5000/admin                 ║
     ║  Login:      manager / admin123                          ║
     ╠══════════════════════════════════════════════════════════╣
-    ║  Features Enabled:                                       ║
-    ║  • Auto-delete after {SOLD_EXPIRY_DAYS} days                    ║
-    ║  • Dynamic photo upload (up to {MAX_PHOTOS} photos)             ║
-    ║  • Residential & Commercial property types              ║
-    ║  • Role-based access (Manager/Agent)                    ║
-    ║  • File upload validation (max 5MB)                     ║
-    ║  • Social Media Links (Facebook & Instagram)            ║
-    ║  • Public API for property details                      ║
-    ║  • CSRF Protection Enabled                              ║
-    ║  • Password Change Routes Fixed (No more 404!)          ║
-    ║  • PERSISTENT STORAGE: /data (Data survives redeploys!) ║
-    ║  • Database: {DB_PATH}                                    ║
-    ║  • Uploads: {UPLOAD_DIR}                                 ║
+    ║  Storage Location: {DATA_DIR}                               ║
     ╚══════════════════════════════════════════════════════════╝
     """)
     app.run(debug=True, port=5000)
