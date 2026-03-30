@@ -1,6 +1,6 @@
 """
-Better Properties — Complete Working Version
-=============================================
+Better Properties — Flask Backend (Debug Version)
+==================================================
 Admin Login: manager / admin123
 """
 
@@ -29,12 +29,43 @@ FACEBOOK_URL    = "https://facebook.com/betterproperties"
 INSTAGRAM_URL   = "https://instagram.com/betterproperties"
 
 # ================================================================
-#  IN-MEMORY STORAGE (No database needed)
+#  HELPER FUNCTIONS (MUST BE DEFINED BEFORE THEY ARE USED!)
+# ================================================================
+def hash_pw(p):
+    salt = "better_properties_salt_2026"
+    return hashlib.sha256((p + salt).encode()).hexdigest()
+
+def fmt_price(p):
+    try:
+        return "{:,}".format(int(p))
+    except:
+        return str(p)
+
+def safe_int(v, d=0):
+    try:
+        return int(float(str(v).strip()))
+    except:
+        return d
+
+def get_csrf_token():
+    if 'csrf_token' not in session:
+        session['csrf_token'] = secrets.token_hex(32)
+    return session['csrf_token']
+
+def validate_csrf():
+    form_token = request.form.get('_csrf')
+    session_token = session.get('csrf_token')
+    if not form_token or not session_token or form_token != session_token:
+        return False
+    return True
+
+# ================================================================
+#  IN-MEMORY STORAGE (NOW hash_pw IS DEFINED!)
 # ================================================================
 properties = []
 property_id_counter = 1
 
-# Users
+# Users - hash_pw is now defined, so this works!
 users = {
     "manager": hash_pw("admin123"),
     "employee1": hash_pw("emp123")
@@ -48,44 +79,16 @@ agents = [
 # Viewing requests
 viewing_requests = []
 
-def hash_pw(p):
-    salt = "better_properties_salt_2026"
-    return hashlib.sha256((p + salt).encode()).hexdigest()
-
 # ================================================================
-#  CSRF PROTECTION
+#  CSRF CONTEXT PROCESSOR
 # ================================================================
-def get_csrf_token():
-    if 'csrf_token' not in session:
-        session['csrf_token'] = secrets.token_hex(32)
-    return session['csrf_token']
-
 @app.context_processor
 def inject_csrf():
     return dict(csrf_token=get_csrf_token)
 
-def validate_csrf():
-    form_token = request.form.get('_csrf')
-    session_token = session.get('csrf_token')
-    if not form_token or not session_token or form_token != session_token:
-        return False
-    return True
-
 # ================================================================
-#  HELPER FUNCTIONS
+#  HELPERS THAT USE STORAGE
 # ================================================================
-def fmt_price(p):
-    try:
-        return "{:,}".format(int(p))
-    except:
-        return str(p)
-
-def safe_int(v, d=0):
-    try:
-        return int(float(str(v).strip()))
-    except:
-        return d
-
 def get_agents():
     return agents
 
@@ -96,9 +99,6 @@ def get_areas():
             areas.add(p["area"])
     return sorted(list(areas))
 
-# ================================================================
-#  CONFIG FOR TEMPLATES
-# ================================================================
 def get_config():
     return {
         "name": BUSINESS_NAME,
@@ -594,7 +594,7 @@ if __name__ == "__main__":
     ║  Login:      manager / admin123                          ║
     ╠══════════════════════════════════════════════════════════╣
     ║  Storage:    In-Memory (for testing)                     ║
-    ║  Status:     RUNNING                                      ║
+    ║  Status:     RUNNING ✅                                   ║
     ╚══════════════════════════════════════════════════════════╝
     """)
     app.run(debug=True, port=5000)
