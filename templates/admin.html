@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Better Properties</title>
+    <!-- SAME FONTS AS FRONT PAGE -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Satisfy&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -13,6 +15,41 @@
             font-family: 'Cormorant Garamond', serif;
             background: #1a1a2e;
             color: #ffffff;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        /* Light Mode */
+        body.light-mode {
+            background: #f5f7fa;
+            color: #333333;
+        }
+        body.light-mode .card,
+        body.light-mode .stat-card,
+        body.light-mode .admin-property-card,
+        body.light-mode .modal-content {
+            background: #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        body.light-mode .form-group input,
+        body.light-mode .form-group select,
+        body.light-mode .form-group textarea {
+            background: #ffffff;
+            border-color: #ddd;
+            color: #333;
+        }
+        body.light-mode .tabs {
+            background: #ffffff;
+        }
+        body.light-mode .tab-btn {
+            color: #666;
+        }
+        body.light-mode .tab-btn.active {
+            color: #ffd700;
+        }
+        body.light-mode th {
+            background: #f5f5f5;
+        }
+        body.light-mode td {
+            border-bottom-color: #eee;
         }
         .admin-header {
             background: linear-gradient(135deg, #2c3e50 0%, #1a2632 100%);
@@ -34,25 +71,55 @@
             gap: 15px;
         }
         .company-logo h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.8em;
-            color: #ffd700;
+            font-family: 'Great Vibes', 'Satisfy', cursive;
+            font-size: 2.2em;
+            font-weight: 800;
+            margin: 0;
+            background: linear-gradient(135deg, #ffd700 0%, #ffaa33 50%, #ff8800 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+        }
+        .company-logo .admin-badge {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.7em;
+            font-weight: 500;
+            color: rgba(255,255,255,0.7);
+            margin-top: 5px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
         .user-info {
             display: flex;
             align-items: center;
             gap: 20px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1em;
         }
-        .btn-logout {
+        .btn-logout, .theme-toggle {
             background: rgba(255,255,255,0.2);
             color: white;
             padding: 8px 15px;
             border-radius: 5px;
             text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-logout:hover, .theme-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
         }
         .tabs {
             background: #0f0f1a;
             margin-bottom: 30px;
+            position: sticky;
+            top: 80px;
+            z-index: 999;
+            transition: background 0.3s ease;
         }
         .tab-buttons {
             display: flex;
@@ -66,9 +133,12 @@
             cursor: pointer;
             font-size: 1em;
             font-weight: 600;
+            font-family: 'Cormorant Garamond', serif;
             color: #aaa;
             border-bottom: 3px solid transparent;
+            transition: all 0.3s;
         }
+        .tab-btn:hover { color: #ffd700; }
         .tab-btn.active {
             color: #ffd700;
             border-bottom-color: #ffd700;
@@ -77,9 +147,7 @@
             display: none;
             animation: fadeIn 0.3s ease;
         }
-        .tab-content.active {
-            display: block;
-        }
+        .tab-content.active { display: block; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -89,11 +157,15 @@
             border-radius: 10px;
             padding: 25px;
             margin-bottom: 25px;
+            transition: background 0.3s ease;
         }
         .card h2 {
             margin-bottom: 20px;
+            font-size: 1.5em;
             border-left: 4px solid #ffd700;
             padding-left: 15px;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
         }
         .stats-grid {
             display: grid;
@@ -106,6 +178,7 @@
             padding: 20px;
             border-radius: 10px;
             text-align: center;
+            transition: background 0.3s ease;
         }
         .stat-card i {
             font-size: 2.5em;
@@ -114,6 +187,11 @@
         .stat-card h3 {
             font-size: 2.2em;
             margin: 10px 0;
+            font-family: 'Playfair Display', serif;
+        }
+        .stat-card p {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1em;
         }
         .form-group {
             margin-bottom: 20px;
@@ -122,6 +200,8 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 700;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1em;
         }
         .form-group input,
         .form-group select,
@@ -130,17 +210,44 @@
             padding: 12px;
             border: 1px solid #3a3a4a;
             border-radius: 5px;
+            font-size: 1em;
+            font-family: 'Cormorant Garamond', serif;
             background: #2a2a3a;
             color: #fff;
+            transition: all 0.3s;
         }
         .form-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
         }
+        .conditional-fields { display: none; }
+        .conditional-fields.active { display: block; }
+        .feature-group {
+            background: #2a2a3a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            transition: background 0.3s ease;
+        }
+        .feature-group h4 {
+            margin-bottom: 15px;
+            color: #ffd700;
+            font-family: 'Playfair Display', serif;
+        }
+        .photo-upload-section {
+            border: 2px dashed #ffd700;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .photo-upload-section h4 {
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 15px;
+        }
         .photo-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 15px;
             margin-top: 15px;
         }
@@ -149,45 +256,68 @@
             border-radius: 8px;
             padding: 10px;
             background: #2a2a3a;
+            position: relative;
+            transition: background 0.3s ease;
         }
         .photo-item input {
             width: 100%;
             font-size: 0.8em;
             margin-bottom: 5px;
+            padding: 6px;
+        }
+        .remove-photo {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .btn-primary, .btn-danger, .btn-warning {
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 0.95em;
+            font-family: 'Cormorant Garamond', serif;
             font-weight: 700;
+            transition: all 0.3s;
         }
         .btn-primary {
             background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
             color: #2c3e50;
         }
+        .btn-primary:hover { transform: translateY(-2px); }
         .btn-danger {
             background: #f44336;
             color: white;
         }
+        .btn-danger:hover { transform: translateY(-2px); }
         .btn-warning {
             background: #ffc107;
             color: #333;
         }
-        .table-container {
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+        .btn-warning:hover { transform: translateY(-2px); }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
         th, td {
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #3a3a4a;
+            font-family: 'Cormorant Garamond', serif;
         }
         th {
             background: #2a2a3a;
+            font-weight: 700;
+            font-family: 'Playfair Display', serif;
         }
         .admin-property-grid {
             display: grid;
@@ -199,18 +329,21 @@
             background: #1e1e2a;
             border-radius: 10px;
             overflow: hidden;
+            transition: transform 0.3s;
+        }
+        .admin-property-card:hover {
+            transform: translateY(-5px);
         }
         .admin-property-card img {
             width: 100%;
             height: 160px;
             object-fit: cover;
         }
-        .admin-property-info {
-            padding: 15px;
-        }
+        .admin-property-info { padding: 15px; }
         .admin-property-info h4 {
             font-size: 1.2em;
             margin-bottom: 5px;
+            font-family: 'Playfair Display', serif;
         }
         .admin-property-info .price {
             color: #ffd700;
@@ -222,6 +355,8 @@
             gap: 10px;
             margin-top: 10px;
         }
+        .admin-property-actions button,
+        .admin-property-actions form { flex: 1; }
         .flash-messages {
             position: fixed;
             top: 80px;
@@ -233,6 +368,8 @@
             margin-bottom: 10px;
             border-radius: 5px;
             animation: slideIn 0.3s ease;
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
         }
         .flash.success { background: #4caf50; color: white; }
         .flash.error { background: #f44336; color: white; }
@@ -252,13 +389,14 @@
         }
         .modal-content {
             background: #1e1e2a;
-            margin: 5% auto;
+            margin: 3% auto;
             padding: 30px;
             width: 90%;
-            max-width: 800px;
+            max-width: 900px;
             border-radius: 15px;
             max-height: 90vh;
             overflow-y: auto;
+            transition: background 0.3s ease;
         }
         .modal-header {
             display: flex;
@@ -266,22 +404,27 @@
             align-items: center;
             margin-bottom: 20px;
         }
+        .modal-header h2 {
+            font-family: 'Playfair Display', serif;
+        }
         .close {
             font-size: 32px;
             cursor: pointer;
+            transition: color 0.3s;
         }
         .close:hover { color: #ffd700; }
         @media (max-width: 768px) {
             .tab-btn { padding: 10px 15px; font-size: 0.85em; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .company-logo h1 { font-size: 1.6em; }
         }
     </style>
 </head>
 <body>
     <div class="flash-messages" id="flashMessages">
-        {% with messages = get_flashed_messages() %}
-            {% for message in messages %}
-                <div class="flash {% if '✅' in message %}success{% else %}error{% endif %}">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ 'success' if category == 'success' else 'error' }}">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -296,6 +439,7 @@
                     <div class="admin-badge">Administration Dashboard</div>
                 </div>
                 <div class="user-info">
+                    <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i> Theme</button>
                     <span>Welcome, {{ session.username }}</span>
                     <a href="/admin/logout" class="btn-logout">Logout</a>
                 </div>
@@ -306,31 +450,23 @@
     <div class="tabs">
         <div class="container">
             <div class="tab-buttons">
-                <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
-                <button class="tab-btn" onclick="switchTab('properties')">🏠 Properties</button>
-                {% if role == 'manager' %}<button class="tab-btn" onclick="switchTab('agents')">👤 Agents</button>{% endif %}
-                {% if role == 'manager' %}<button class="tab-btn" onclick="switchTab('users')">👥 Users</button>{% endif %}
-                <button class="tab-btn" onclick="switchTab('requests')">📋 Viewing Requests</button>
-                <button class="tab-btn" onclick="switchTab('settings')">🔒 My Password</button>
+                <button class="tab-btn active" onclick="switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</button>
+                <button class="tab-btn" onclick="switchTab('properties')"><i class="fas fa-home"></i> Properties</button>
+                {% if role == 'manager' %}<button class="tab-btn" onclick="switchTab('agents')"><i class="fas fa-users"></i> Agents</button>{% endif %}
+                {% if role == 'manager' %}<button class="tab-btn" onclick="switchTab('users')"><i class="fas fa-user-shield"></i> Users</button>{% endif %}
+                <button class="tab-btn" onclick="switchTab('requests')"><i class="fas fa-calendar-check"></i> Viewing Requests</button>
+                <button class="tab-btn" onclick="switchTab('settings')"><i class="fas fa-key"></i> My Password</button>
             </div>
         </div>
     </div>
     
     <div class="container">
+        <!-- DASHBOARD TAB -->
         <div id="dashboard" class="tab-content active">
             <div class="stats-grid">
-                <div class="stat-card">
-                    <i class="fas fa-building"></i>
-                    <h3>{{ total_props }}</h3>
-                    <p>Total Properties</p>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-calendar"></i>
-                    <h3>{{ total_requests }}</h3>
-                    <p>Viewing Requests</p>
-                </div>
+                <div class="stat-card"><i class="fas fa-building"></i><h3>{{ total_props }}</h3><p>Total Properties</p></div>
+                <div class="stat-card"><i class="fas fa-calendar"></i><h3>{{ total_requests }}</h3><p>Viewing Requests</p></div>
             </div>
-            
             <div class="card">
                 <h2>Recent Properties</h2>
                 <div class="admin-property-grid">
@@ -344,11 +480,11 @@
                         <div class="admin-property-info">
                             <h4>{{ p.title }}</h4>
                             <div class="price">${{ fmt_price(p.price) }}{% if p.listing_type in ['rent', 'lease'] %}/month{% endif %}</div>
-                            <p>{{ p.area }}</p>
+                            <p><i class="fas fa-location-dot"></i> {{ p.area }} | <i class="fas fa-bed"></i> {{ p.bedrooms }} beds | <i class="fas fa-bath"></i> {{ p.bathrooms }} baths</p>
                             <div class="admin-property-actions">
-                                <button class="btn-warning" onclick="editProperty({{ p.id }})">Edit</button>
+                                <button class="btn-warning" onclick="editProperty({{ p.id }})"><i class="fas fa-edit"></i> Edit</button>
                                 <form action="/admin/property/delete/{{ p.id }}" method="POST" style="margin:0">
-                                    <button type="submit" class="btn-danger" onclick="return confirm('Delete this property?')">Delete</button>
+                                    <button type="submit" class="btn-danger" onclick="return confirm('Delete this property?')"><i class="fas fa-trash"></i> Delete</button>
                                 </form>
                             </div>
                         </div>
@@ -358,25 +494,19 @@
             </div>
         </div>
         
+        <!-- PROPERTIES TAB - Same as before, truncated for brevity -->
         <div id="properties" class="tab-content">
             <div class="card">
-                <h2>Add New Property</h2>
+                <h2><i class="fas fa-plus-circle"></i> Add New Property</h2>
                 <form action="/admin/property/add" method="POST" id="addPropertyForm">
                     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>Title *</label>
-                            <input type="text" name="title" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Price *</label>
-                            <input type="number" name="price" required>
-                        </div>
+                        <div class="form-group"><label><i class="fas fa-heading"></i> Title *</label><input type="text" name="title" required></div>
+                        <div class="form-group"><label><i class="fas fa-tag"></i> Price *</label><input type="number" name="price" required></div>
                     </div>
-                    
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Listing Type</label>
+                            <label><i class="fas fa-tag"></i> Listing Type</label>
                             <select name="listing_type">
                                 <option value="sale">For Sale</option>
                                 <option value="rent">For Rent</option>
@@ -384,70 +514,73 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Property Type</label>
-                            <select name="property_type">
+                            <label><i class="fas fa-building"></i> Property Type</label>
+                            <select name="property_type" id="propertyTypeSelect">
                                 <option value="residential">🏠 Residential</option>
                                 <option value="commercial">🏢 Commercial</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>Area</label>
-                            <input type="text" name="area" placeholder="e.g., Chaguanas">
-                        </div>
+                        <div class="form-group"><label><i class="fas fa-location-dot"></i> Area</label><input type="text" name="area" placeholder="e.g., Chaguanas"></div>
                     </div>
-                    
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Status</label>
+                            <label><i class="fas fa-chart-line"></i> Status</label>
                             <select name="status">
                                 <option value="Available">Available</option>
                                 <option value="Under Offer">Under Offer</option>
                                 <option value="Sold">Sold</option>
                                 <option value="Rented">Rented</option>
+                                <option value="Leased">Leased</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>Badge</label>
-                            <input type="text" name="badge" placeholder="e.g., New, Featured">
+                        <div class="form-group"><label><i class="fas fa-medal"></i> Badge</label><input type="text" name="badge" placeholder="e.g., New, Featured"></div>
+                    </div>
+                    
+                    <div id="residentialFields" class="conditional-fields active">
+                        <div class="feature-group">
+                            <h4><i class="fas fa-home"></i> Residential Features</h4>
+                            <div class="form-row">
+                                <div class="form-group"><label><i class="fas fa-bed"></i> Bedrooms</label><input type="number" name="bedrooms" value="0"></div>
+                                <div class="form-group"><label><i class="fas fa-bath"></i> Bathrooms</label><input type="number" name="bathrooms" value="0"></div>
+                                <div class="form-group"><label><i class="fas fa-couch"></i> Living Rooms</label><input type="number" name="living_rooms" value="0"></div>
+                                <div class="form-group"><label><i class="fas fa-utensils"></i> Kitchens</label><input type="number" name="kitchens" value="0"></div>
+                                <div class="form-group"><label><i class="fas fa-car"></i> Garages</label><input type="number" name="garages" value="0"></div>
+                                <div class="form-group"><label><i class="fas fa-arrows-alt"></i> Square Feet</label><input type="number" name="sqft" value="0"></div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Bedrooms</label>
-                            <input type="number" name="bedrooms" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Bathrooms</label>
-                            <input type="number" name="bathrooms" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Square Feet</label>
-                            <input type="number" name="sqft" value="0">
+                    <div id="commercialFields" class="conditional-fields">
+                        <div class="feature-group">
+                            <h4><i class="fas fa-building"></i> Commercial Features</h4>
+                            <div class="form-row">
+                                <div class="form-group"><label><i class="fas fa-briefcase"></i> Offices</label><input type="number" name="offices" value="0"></div>
+                                <div class="form-group"><label><i class="fas fa-chalkboard"></i> Conference Rooms</label><input type="number" name="conference_rooms" value="0"></div>
+                                <div class="form-group"><label><i class="fas fa-bath"></i> Bathrooms</label><input type="number" name="bathrooms" value="0"></div>
+                                <div class="form-group"><label><i class="fas fa-utensils"></i> Kitchens</label><input type="number" name="kitchens" value="0"></div>
+                                <div class="form-group"><label><i class="fas fa-parking"></i> Parking Spaces</label><input type="number" name="parking_spaces" value="0"></div>
+                                <div class="form-group"><label><i class="fas fa-arrows-alt"></i> Square Feet</label><input type="number" name="sqft" value="0"></div>
+                                <div class="form-group"><label><i class="fas fa-layer-group"></i> Floor Number</label><input type="number" name="floor_number" value="0"></div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="description" rows="4"></textarea>
-                    </div>
+                    <div class="form-group"><label><i class="fas fa-align-left"></i> Description</label><textarea name="description" rows="4"></textarea></div>
+                    <div class="form-group"><label><i class="fas fa-map"></i> Map URL</label><input type="text" name="map_url" placeholder="https://www.google.com/maps/embed/..."></div>
                     
                     <div class="photo-upload-section">
                         <h4><i class="fas fa-images"></i> Photos (up to {{ max_photos }})</h4>
                         <div id="photoGrid" class="photo-grid"></div>
-                        <button type="button" class="btn-primary" onclick="addPhotoField()" style="margin-top:10px;">Add Photo URL</button>
+                        <button type="button" class="btn-primary" onclick="addPhotoField()" style="margin-top:10px;"><i class="fas fa-plus"></i> Add Photo URL</button>
                     </div>
                     
-                    <div class="form-group">
-                        <label><input type="checkbox" name="featured" value="1"> Featured Property</label>
-                    </div>
-                    
-                    <button type="submit" class="btn-primary">Add Property</button>
+                    <div class="form-group"><label><input type="checkbox" name="featured" value="1"> <i class="fas fa-star" style="color:#ffd700;"></i> Featured Property</label></div>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Add Property</button>
                 </form>
             </div>
             
             <div class="card">
-                <h2>All Properties ({{ total_props }})</h2>
+                <h2><i class="fas fa-list"></i> All Properties ({{ total_props }})</h2>
                 <div class="admin-property-grid">
                     {% for p in props %}
                     <div class="admin-property-card">
@@ -459,11 +592,12 @@
                         <div class="admin-property-info">
                             <h4>{{ p.title }}</h4>
                             <div class="price">${{ fmt_price(p.price) }}{% if p.listing_type in ['rent', 'lease'] %}/month{% endif %}</div>
-                            <p>{{ p.area }} | {{ p.bedrooms }} beds | {{ p.bathrooms }} baths</p>
+                            <p><i class="fas fa-location-dot"></i> {{ p.area }} | <i class="fas fa-bed"></i> {{ p.bedrooms }} beds | <i class="fas fa-bath"></i> {{ p.bathrooms }} baths</p>
+                            <p><i class="fas fa-chart-line"></i> Status: <strong>{{ p.status }}</strong></p>
                             <div class="admin-property-actions">
-                                <button class="btn-warning" onclick="editProperty({{ p.id }})">Edit</button>
+                                <button class="btn-warning" onclick="editProperty({{ p.id }})"><i class="fas fa-edit"></i> Edit</button>
                                 <form action="/admin/property/delete/{{ p.id }}" method="POST" style="margin:0">
-                                    <button type="submit" class="btn-danger" onclick="return confirm('Delete this property?')">Delete</button>
+                                    <button type="submit" class="btn-danger" onclick="return confirm('Delete this property?')"><i class="fas fa-trash"></i> Delete</button>
                                 </form>
                             </div>
                         </div>
@@ -473,31 +607,29 @@
             </div>
         </div>
         
+        <!-- AGENTS TAB -->
         <div id="agents" class="tab-content">
             <div class="card">
-                <h2>Add New Agent</h2>
+                <h2><i class="fas fa-user-plus"></i> Add New Agent</h2>
                 <form action="/admin/agent/add" method="POST">
                     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
                     <div class="form-row">
-                        <div class="form-group"><label>Name *</label><input type="text" name="name" required></div>
-                        <div class="form-group"><label>Phone</label><input type="text" name="phone"></div>
+                        <div class="form-group"><label><i class="fas fa-user"></i> Name *</label><input type="text" name="name" required></div>
+                        <div class="form-group"><label><i class="fas fa-phone"></i> Phone</label><input type="text" name="phone"></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group"><label>Email</label><input type="email" name="email"></div>
-                        <div class="form-group"><label>Username</label><input type="text" name="username"></div>
+                        <div class="form-group"><label><i class="fas fa-envelope"></i> Email</label><input type="email" name="email"></div>
+                        <div class="form-group"><label><i class="fas fa-user-tag"></i> Username</label><input type="text" name="username"></div>
                     </div>
-                    <div class="form-group"><label>Bio</label><textarea name="bio" rows="3"></textarea></div>
-                    <button type="submit" class="btn-primary">Add Agent</button>
+                    <div class="form-group"><label><i class="fas fa-info-circle"></i> Bio</label><textarea name="bio" rows="3"></textarea></div>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Add Agent</button>
                 </form>
             </div>
-            
             <div class="card">
-                <h2>All Agents</h2>
+                <h2><i class="fas fa-users"></i> All Agents</h2>
                 <div class="table-container">
                     <table>
-                        <thead>
-                            <tr><th>Name</th><th>Phone</th><th>Email</th><th>Actions</th></tr>
-                        </thead>
+                        <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Actions</th></tr></thead>
                         <tbody>
                             {% for agent in agents %}
                             <tr>
@@ -506,7 +638,7 @@
                                 <td>{{ agent.email }}</td>
                                 <td>
                                     <form action="/admin/agent/delete/{{ agent.id }}" method="POST" style="display:inline">
-                                        <button type="submit" class="btn-danger" onclick="return confirm('Delete this agent?')">Delete</button>
+                                        <button type="submit" class="btn-danger" onclick="return confirm('Delete this agent?')"><i class="fas fa-trash"></i> Delete</button>
                                     </form>
                                 </td>
                             </tr>
@@ -517,22 +649,22 @@
             </div>
         </div>
         
+        <!-- USERS TAB -->
         <div id="users" class="tab-content">
             <div class="card">
-                <h2>Add New User</h2>
+                <h2><i class="fas fa-user-plus"></i> Add New User</h2>
                 <form action="/admin/user/add" method="POST">
                     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
                     <div class="form-row">
-                        <div class="form-group"><label>Username *</label><input type="text" name="username" required></div>
-                        <div class="form-group"><label>Password *</label><input type="password" name="password" required></div>
-                        <div class="form-group"><label>Role</label><select name="role"><option value="employee">Employee</option><option value="manager">Manager</option></select></div>
+                        <div class="form-group"><label><i class="fas fa-user"></i> Username *</label><input type="text" name="username" required></div>
+                        <div class="form-group"><label><i class="fas fa-lock"></i> Password *</label><input type="password" name="password" required></div>
+                        <div class="form-group"><label><i class="fas fa-user-shield"></i> Role</label><select name="role"><option value="employee">Employee</option><option value="manager">Manager</option></select></div>
                     </div>
-                    <button type="submit" class="btn-primary">Add User</button>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Add User</button>
                 </form>
             </div>
-            
             <div class="card">
-                <h2>All Users</h2>
+                <h2><i class="fas fa-users"></i> All Users</h2>
                 <div class="table-container">
                     <table>
                         <thead><tr><th>Username</th><th>Role</th><th>Actions</th></tr></thead>
@@ -544,10 +676,10 @@
                                 <td>
                                     {% if user.username != 'manager' %}
                                     <form action="/admin/user/delete/{{ user.username }}" method="POST" style="display:inline">
-                                        <button type="submit" class="btn-danger" onclick="return confirm('Delete this user?')">Delete</button>
+                                        <button type="submit" class="btn-danger" onclick="return confirm('Delete this user?')"><i class="fas fa-trash"></i> Delete</button>
                                     </form>
                                     {% endif %}
-                                    <button class="btn-warning" onclick="changePassword('{{ user.username }}')">Change Password</button>
+                                    <button class="btn-warning" onclick="changePassword('{{ user.username }}')"><i class="fas fa-key"></i> Change Password</button>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -557,9 +689,10 @@
             </div>
         </div>
         
+        <!-- VIEWING REQUESTS TAB -->
         <div id="requests" class="tab-content">
             <div class="card">
-                <h2>Viewing Requests</h2>
+                <h2><i class="fas fa-calendar-check"></i> Viewing Requests</h2>
                 <div class="table-container">
                     <table>
                         <thead><tr><th>Property</th><th>Name</th><th>Email</th><th>Phone</th><th>Requested Date</th></tr></thead>
@@ -579,43 +712,79 @@
             </div>
         </div>
         
+        <!-- SETTINGS TAB -->
         <div id="settings" class="tab-content">
             <div class="card" style="max-width:500px;">
-                <h2><i class="fas fa-lock"></i> Change My Password</h2>
+                <h2><i class="fas fa-key"></i> Change My Password</h2>
                 <form method="POST" action="/admin/user/change_my_password">
                     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-                    <div class="form-group">
-                        <label>Current Password</label>
-                        <input type="password" name="current_password" required>
-                    </div>
-                    <div class="form-group">
-                        <label>New Password (min 8 characters)</label>
-                        <input type="password" name="new_password" required minlength="8">
-                    </div>
-                    <div class="form-group">
-                        <label>Confirm New Password</label>
-                        <input type="password" name="confirm_password" required minlength="8">
-                    </div>
-                    <button type="submit" class="btn-primary">Update Password</button>
+                    <div class="form-group"><label><i class="fas fa-lock"></i> Current Password</label><input type="password" name="current_password" required></div>
+                    <div class="form-group"><label><i class="fas fa-lock"></i> New Password (min 8 characters)</label><input type="password" name="new_password" required minlength="8"></div>
+                    <div class="form-group"><label><i class="fas fa-lock"></i> Confirm New Password</label><input type="password" name="confirm_password" required minlength="8"></div>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Update Password</button>
                 </form>
             </div>
         </div>
     </div>
     
-    <!-- Password Modal -->
+    <!-- EDIT PROPERTY MODAL -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h2><i class="fas fa-edit"></i> Edit Property</h2><span class="close" onclick="closeModal()">&times;</span></div>
+            <form id="editForm" method="POST">
+                <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                <input type="hidden" id="edit_property_id" name="property_id">
+                <div class="form-row">
+                    <div class="form-group"><label>Title</label><input type="text" id="edit_title" name="title" required></div>
+                    <div class="form-group"><label>Price</label><input type="number" id="edit_price" name="price" required></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Listing Type</label><select id="edit_listing_type" name="listing_type"><option value="sale">For Sale</option><option value="rent">For Rent</option><option value="lease">For Lease</option></select></div>
+                    <div class="form-group"><label>Property Type</label><select id="edit_property_type" name="property_type"><option value="residential">Residential</option><option value="commercial">Commercial</option></select></div>
+                    <div class="form-group"><label>Area</label><input type="text" id="edit_area" name="area"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Status</label><select id="edit_status" name="status"><option value="Available">Available</option><option value="Under Offer">Under Offer</option><option value="Sold">Sold</option><option value="Rented">Rented</option><option value="Leased">Leased</option></select></div>
+                    <div class="form-group"><label>Badge</label><input type="text" id="edit_badge" name="badge"></div>
+                </div>
+                <div id="editResidentialFields">
+                    <div class="feature-group"><h4>Residential Features</h4><div class="form-row">
+                        <div class="form-group"><label>Bedrooms</label><input type="number" id="edit_bedrooms" name="bedrooms"></div>
+                        <div class="form-group"><label>Bathrooms</label><input type="number" id="edit_bathrooms" name="bathrooms"></div>
+                        <div class="form-group"><label>Living Rooms</label><input type="number" id="edit_living_rooms" name="living_rooms"></div>
+                        <div class="form-group"><label>Kitchens</label><input type="number" id="edit_kitchens" name="kitchens"></div>
+                        <div class="form-group"><label>Garages</label><input type="number" id="edit_garages" name="garages"></div>
+                        <div class="form-group"><label>Square Feet</label><input type="number" id="edit_sqft" name="sqft"></div>
+                    </div></div>
+                </div>
+                <div id="editCommercialFields" style="display:none;">
+                    <div class="feature-group"><h4>Commercial Features</h4><div class="form-row">
+                        <div class="form-group"><label>Offices</label><input type="number" id="edit_offices" name="offices"></div>
+                        <div class="form-group"><label>Conference Rooms</label><input type="number" id="edit_conference_rooms" name="conference_rooms"></div>
+                        <div class="form-group"><label>Bathrooms</label><input type="number" id="edit_bathrooms" name="bathrooms"></div>
+                        <div class="form-group"><label>Kitchens</label><input type="number" id="edit_kitchens" name="kitchens"></div>
+                        <div class="form-group"><label>Parking Spaces</label><input type="number" id="edit_parking_spaces" name="parking_spaces"></div>
+                        <div class="form-group"><label>Square Feet</label><input type="number" id="edit_sqft" name="sqft"></div>
+                        <div class="form-group"><label>Floor Number</label><input type="number" id="edit_floor_number" name="floor_number"></div>
+                    </div></div>
+                </div>
+                <div class="form-group"><label>Description</label><textarea id="edit_description" name="description" rows="4"></textarea></div>
+                <div class="form-group"><label>Map URL</label><input type="text" id="edit_map_url" name="map_url"></div>
+                <div class="photo-upload-section"><h4>Photos</h4><div id="editPhotoGrid" class="photo-grid"></div><button type="button" class="btn-primary" onclick="addEditPhotoField()">+ Add Photo URL</button></div>
+                <div class="form-group"><label><input type="checkbox" id="edit_featured" name="featured" value="1"> Featured Property</label></div>
+                <button type="submit" class="btn-primary">Update Property</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- PASSWORD MODAL -->
     <div id="passwordModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2>Change Password</h2>
-                <span class="close" onclick="closePasswordModal()">&times;</span>
-            </div>
+            <div class="modal-header"><h2><i class="fas fa-key"></i> Change Password</h2><span class="close" onclick="closePasswordModal()">&times;</span></div>
             <form id="passwordForm" method="POST" action="/admin/user/password">
                 <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
                 <input type="hidden" id="password_username" name="username">
-                <div class="form-group">
-                    <label>New Password</label>
-                    <input type="password" name="new_password" required>
-                </div>
+                <div class="form-group"><label>New Password</label><input type="password" name="new_password" required></div>
                 <button type="submit" class="btn-primary">Update Password</button>
             </form>
         </div>
@@ -623,6 +792,7 @@
     
     <script>
         let photoCount = 0;
+        let editPhotoCounter = 0;
         const maxPhotos = {{ max_photos }};
         
         function switchTab(tabName) {
@@ -632,70 +802,177 @@
             });
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             const el = document.getElementById(tabName);
-            if (el) { 
-                el.classList.add('active'); 
-                el.style.display = 'block'; 
+            if (el) {
+                el.classList.add('active');
+                el.style.display = 'block';
             }
             if (event && event.target) event.target.classList.add('active');
+            window.location.hash = tabName;
         }
         
-        // Initialize - show dashboard
-        document.querySelectorAll('.tab-content').forEach(t => { 
-            t.style.display = 'none'; 
-        });
-        document.getElementById('dashboard').style.display = 'block';
+        // Check URL hash for tab
+        const hash = window.location.hash.substring(1);
+        if (hash && ['dashboard','properties','agents','users','requests','settings'].includes(hash)) {
+            switchTab(hash);
+        } else {
+            document.getElementById('dashboard').style.display = 'block';
+        }
         
-        function addPhotoField() {
-            if (photoCount >= maxPhotos) { 
-                alert(`Maximum ${maxPhotos} photos allowed.`); 
-                return; 
+        // Property type toggle
+        const propTypeSelect = document.getElementById('propertyTypeSelect');
+        const residentialFields = document.getElementById('residentialFields');
+        const commercialFields = document.getElementById('commercialFields');
+        function togglePropertyFields() {
+            if (propTypeSelect && propTypeSelect.value === 'residential') {
+                residentialFields.classList.add('active');
+                commercialFields.classList.remove('active');
+            } else if (propTypeSelect) {
+                residentialFields.classList.remove('active');
+                commercialFields.classList.add('active');
             }
+        }
+        if (propTypeSelect) {
+            propTypeSelect.addEventListener('change', togglePropertyFields);
+            togglePropertyFields();
+        }
+        
+        // Photo fields
+        function addPhotoField() {
+            if (photoCount >= maxPhotos) { alert(`Maximum ${maxPhotos} photos allowed.`); return; }
             photoCount++;
-            const photoGrid = document.getElementById('photoGrid');
-            const photoDiv = document.createElement('div'); 
-            photoDiv.className = 'photo-item'; 
-            photoDiv.id = `photo-${photoCount}`;
-            photoDiv.innerHTML = `<button type="button" class="remove-photo" style="background:#f44336;color:white;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;margin-bottom:5px;" onclick="removePhotoField(${photoCount})">×</button><input type="text" name="img${photoCount}_url" class="url-input" placeholder="Image URL">`;
-            photoGrid.appendChild(photoDiv);
+            const grid = document.getElementById('photoGrid');
+            if (!grid) return;
+            const div = document.createElement('div');
+            div.className = 'photo-item';
+            div.id = `photo-${photoCount}`;
+            div.innerHTML = `<button type="button" class="remove-photo" onclick="removePhotoField(${photoCount})">×</button><input type="text" name="img${photoCount}_url" placeholder="Image URL">`;
+            grid.appendChild(div);
+        }
+        function removePhotoField(id) {
+            const el = document.getElementById(`photo-${id}`);
+            if (el) el.remove();
+        }
+        // Initialize photo fields
+        if (document.getElementById('photoGrid')) {
+            for (let i = 1; i <= 3; i++) addPhotoField();
         }
         
-        function removePhotoField(id) { 
-            const el = document.getElementById(`photo-${id}`); 
-            if (el) el.remove(); 
-        }
-        
-        // Add initial photo fields
-        for (let i = 1; i <= 3; i++) addPhotoField();
-        
-        function changePassword(username) { 
-            document.getElementById('password_username').value = username; 
-            document.getElementById('passwordModal').style.display = 'block'; 
-        }
-        
-        function closePasswordModal() { 
-            document.getElementById('passwordModal').style.display = 'none'; 
-        }
-        
+        // Edit property
         async function editProperty(propertyId) {
             try {
                 const response = await fetch(`/admin/property/${propertyId}/json`);
+                if (!response.ok) throw new Error('Failed to load property');
                 const data = await response.json();
-                alert(`Edit property: ${data.title}\n\nFull edit functionality requires the complete admin template. For now, you can delete and re-add.`);
-            } catch (error) { 
-                alert('Error loading property data'); 
+                
+                document.getElementById('edit_property_id').value = propertyId;
+                document.getElementById('edit_title').value = data.title || '';
+                document.getElementById('edit_price').value = data.price || 0;
+                document.getElementById('edit_listing_type').value = data.listing_type || 'sale';
+                document.getElementById('edit_property_type').value = data.property_type || 'residential';
+                document.getElementById('edit_area').value = data.area || '';
+                document.getElementById('edit_status').value = data.status || 'Available';
+                document.getElementById('edit_badge').value = data.badge || '';
+                document.getElementById('edit_description').value = data.description || '';
+                document.getElementById('edit_map_url').value = data.map_url || '';
+                document.getElementById('edit_featured').checked = data.featured == 1;
+                document.getElementById('edit_bedrooms').value = data.bedrooms || 0;
+                document.getElementById('edit_bathrooms').value = data.bathrooms || 0;
+                document.getElementById('edit_living_rooms').value = data.living_rooms || 0;
+                document.getElementById('edit_kitchens').value = data.kitchens || 0;
+                document.getElementById('edit_garages').value = data.garages || 0;
+                document.getElementById('edit_sqft').value = data.sqft || 0;
+                document.getElementById('edit_offices').value = data.offices || 0;
+                document.getElementById('edit_conference_rooms').value = data.conference_rooms || 0;
+                document.getElementById('edit_parking_spaces').value = data.parking_spaces || 0;
+                document.getElementById('edit_floor_number').value = data.floor_number || 0;
+                
+                // Toggle residential/commercial in edit modal
+                const editPropType = document.getElementById('edit_property_type');
+                const editRes = document.getElementById('editResidentialFields');
+                const editComm = document.getElementById('editCommercialFields');
+                function toggleEditFields() {
+                    if (editPropType.value === 'residential') {
+                        editRes.style.display = 'block';
+                        editComm.style.display = 'none';
+                    } else {
+                        editRes.style.display = 'none';
+                        editComm.style.display = 'block';
+                    }
+                }
+                editPropType.onchange = toggleEditFields;
+                toggleEditFields();
+                
+                // Load images
+                const editGrid = document.getElementById('editPhotoGrid');
+                editGrid.innerHTML = '';
+                editPhotoCounter = 0;
+                if (data.images && data.images.length > 0) {
+                    data.images.forEach((img, idx) => {
+                        editPhotoCounter++;
+                        const div = document.createElement('div');
+                        div.className = 'photo-item';
+                        div.id = `edit-photo-${editPhotoCounter}`;
+                        div.innerHTML = `<button type="button" class="remove-photo" onclick="removeEditPhotoField(${editPhotoCounter})">×</button><input type="text" name="img${editPhotoCounter}_url" placeholder="Image URL" value="${img.replace(/"/g, '&quot;')}">`;
+                        editGrid.appendChild(div);
+                    });
+                }
+                while (editPhotoCounter < 3) {
+                    editPhotoCounter++;
+                    const div = document.createElement('div');
+                    div.className = 'photo-item';
+                    div.id = `edit-photo-${editPhotoCounter}`;
+                    div.innerHTML = `<button type="button" class="remove-photo" onclick="removeEditPhotoField(${editPhotoCounter})">×</button><input type="text" name="img${editPhotoCounter}_url" placeholder="Image URL">`;
+                    editGrid.appendChild(div);
+                }
+                
+                document.getElementById('editForm').action = `/admin/property/edit/${propertyId}`;
+                document.getElementById('editModal').style.display = 'block';
+            } catch (error) {
+                alert('Error loading property: ' + error.message);
             }
         }
         
-        setTimeout(() => { 
-            document.querySelectorAll('.flash').forEach(flash => { 
-                setTimeout(() => { 
-                    flash.style.opacity = '0'; 
-                    setTimeout(() => flash.remove(), 300); 
-                }, 3000); 
-            }); 
+        function addEditPhotoField() {
+            editPhotoCounter++;
+            if (editPhotoCounter > maxPhotos) { alert(`Maximum ${maxPhotos} photos allowed.`); return; }
+            const grid = document.getElementById('editPhotoGrid');
+            const div = document.createElement('div');
+            div.className = 'photo-item';
+            div.id = `edit-photo-${editPhotoCounter}`;
+            div.innerHTML = `<button type="button" class="remove-photo" onclick="removeEditPhotoField(${editPhotoCounter})">×</button><input type="text" name="img${editPhotoCounter}_url" placeholder="Image URL">`;
+            grid.appendChild(div);
+        }
+        function removeEditPhotoField(id) {
+            const el = document.getElementById(`edit-photo-${id}`);
+            if (el) el.remove();
+        }
+        
+        function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+        function changePassword(username) {
+            document.getElementById('password_username').value = username;
+            document.getElementById('passwordModal').style.display = 'block';
+        }
+        function closePasswordModal() { document.getElementById('passwordModal').style.display = 'none'; }
+        
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const btn = document.querySelector('.theme-toggle');
+            if (document.body.classList.contains('light-mode')) {
+                btn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+            } else {
+                btn.innerHTML = '<i class="fas fa-moon"></i> Theme';
+            }
+        }
+        
+        // Auto-hide flash messages
+        setTimeout(() => {
+            document.querySelectorAll('.flash').forEach(flash => {
+                setTimeout(() => { flash.style.opacity = '0'; setTimeout(() => flash.remove(), 300); }, 3000);
+            });
         }, 100);
         
         window.onclick = function(event) {
+            if (event.target == document.getElementById('editModal')) closeModal();
             if (event.target == document.getElementById('passwordModal')) closePasswordModal();
         }
     </script>
