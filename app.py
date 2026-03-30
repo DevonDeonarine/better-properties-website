@@ -10,7 +10,7 @@ Login: manager / admin123
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
 from datetime import datetime, timedelta
-import sqlite3, hashlib, json, os, shutil, re, threading, time, secrets
+import sqlite3, hashlib, json, os, shutil, re, threading, time, secrets, tempfile
 
 app = Flask(__name__)
 
@@ -29,10 +29,20 @@ BUSINESS_LOCATION = "Trinidad & Tobago"
 SOLD_EXPIRY_DAYS  = 7
 AUTO_CLEANUP_HOURS = 1  # Check every hour (change to 0.5 for 30 mins, 24 for once a day)
 
+# Database path - MUST use /tmp on Leapcell (only writable directory)
+# On Leapcell serverless, only /tmp is writable
+# On local development, it will use the current directory
+if os.path.exists('/tmp'):
+    # Running on Leapcell or similar serverless environment
+    DB_PATH = '/tmp/better_properties.db'
+else:
+    # Local development
+    DB_PATH = os.path.join(os.path.dirname(__file__), "better_properties.db")
+
+print(f"Database path: {DB_PATH}")  # Helpful for debugging
+
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "static", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-DB_PATH = os.path.join(os.path.dirname(__file__), "better_properties.db")
 
 # File upload restrictions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
