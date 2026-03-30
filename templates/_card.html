@@ -1,0 +1,65 @@
+<!-- _card.html - Property Card Template with Expiring Warning -->
+<div class="property-card" 
+     data-property-id="{{ p.id }}" 
+     data-listing-type="{{ p.listing_type|default('sale') }}" 
+     data-property-type="{{ p.property_type|default('residential') }}">
+    <div class="property-images">
+        {% if p.images and p.images|length > 0 %}
+            <img src="{{ p.images[0] }}" alt="{{ p.title }}" class="property-image">
+            {% if p.images|length > 1 %}
+                <div class="image-count">{{ p.images|length }} photos</div>
+            {% endif %}
+        {% else %}
+            <img src="https://via.placeholder.com/400x300?text=No+Image" alt="No Image" class="property-image">
+        {% endif %}
+        
+        {% if p.badge %}
+            <div class="property-badge">{{ p.badge }}</div>
+        {% endif %}
+        
+        <div class="property-status status-{{ p.status|replace(' ', '-') }}">
+            {{ p.status }}
+        </div>
+    </div>
+    
+    <div class="property-details">
+        <h3 class="property-title">{{ p.title }}</h3>
+        <div class="property-price">${{ fmt_price(p.price) }}</div>
+        
+        <div class="property-features">
+            <span class="feature"><i class="fas fa-bed"></i> {{ p.beds }} bed{{ 's' if p.beds != 1 }}</span>
+            <span class="feature"><i class="fas fa-bath"></i> {{ p.baths }} bath{{ 's' if p.baths != 1 }}</span>
+            <span class="feature"><i class="fas fa-map-marker-alt"></i> {{ p.area }}</span>
+        </div>
+        
+        <div class="property-description">
+            {{ p.description | truncate(100, true, '...') }}
+        </div>
+        
+        <!-- SOLD / RENTED / LEASED PROPERTY WARNING - EXPIRING SOON -->
+        {% if p.status in ['Sold', 'Rented', 'Leased'] %}
+            {% set status_verb = 'sold' if p.status == 'Sold' else ('rented' if p.status == 'Rented' else 'leased') %}
+            {% if p.expiring_soon %}
+                <div class="expiring-warning urgent-warning">
+                    <strong>⚠️ EXPIRING SOON! ⚠️</strong><br>
+                    This listing will be removed in <strong>{{ p.days_left }}</strong> day{% if p.days_left != 1 %}s{% endif %}
+                </div>
+            {% elif p.days_left is not none and p.days_left > 0 %}
+                <div class="expiring-warning info-warning">
+                    <strong>📢 {{ p.status | upper }}</strong><br>
+                    This property was {{ status_verb }} and will be removed in <strong>{{ p.days_left }}</strong> day{% if p.days_left != 1 %}s{% endif %}
+                </div>
+            {% else %}
+                <div class="expiring-warning sold-warning">
+                    <strong>✅ {{ p.status | upper }}</strong><br>
+                    This property has been {{ status_verb }}
+                </div>
+            {% endif %}
+        {% endif %}
+        
+        <div class="property-actions">
+            <button class="btn-view" onclick="viewDetails({{ p.id }})">View Details</button>
+            <button class="btn-schedule" onclick="scheduleViewing({{ p.id }}, '{{ p.title|replace("'", "\\'") }}')">Schedule Viewing</button>
+        </div>
+    </div>
+</div>

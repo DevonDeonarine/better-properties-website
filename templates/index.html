@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Better Properties - {{ config.sub }}</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Satisfy&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-gradient-start: #f5f7fa;
+            --bg-gradient-end: #c3cfe2;
+            --card-bg: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-muted: #7f8c8d;
+            --border-color: #eeeeee;
+            --navbar-bg: #ffffff;
+            --footer-bg: linear-gradient(135deg, #2c3e50 0%, #1a2632 100%);
+            --filter-bg: #ffffff;
+            --input-bg: #ffffff;
+            --input-border: #dddddd;
+            --shadow: rgba(0,0,0,0.1);
+            --contact-icon-bg: #f0f0f0;
+            --btn-location-bg: #2196f3;
+            --gold-gradient: linear-gradient(135deg, #ffd700 0%, #ffaa33 50%, #ff8800 100%);
+            --badge-bg: linear-gradient(135deg, #ffd700, #ff8c00);
+        }
+        
+        body.dark-mode {
+            --bg-gradient-start: #1a1a2e;
+            --bg-gradient-end: #0f0f1a;
+            --card-bg: #1e1e2a;
+            --text-primary: #ffffff;
+            --text-secondary: #e0e0e0;
+            --text-muted: #b0b0b0;
+            --border-color: #2a2a3a;
+            --navbar-bg: #0a0a0f;
+            --footer-bg: linear-gradient(135deg, #0a0a0f 0%, #050510 100%);
+            --filter-bg: #1e1e2a;
+            --input-bg: #2a2a3a;
+            --input-border: #3a3a4a;
+            --shadow: rgba(0,0,0,0.3);
+            --contact-icon-bg: #2a2a3a;
+            --btn-location-bg: #1976d2;
+        }
+        
+        body {
+            font-family: 'Cormorant Garamond', 'Georgia', serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            font-size: 18px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        
+        .navbar {
+            background: var(--navbar-bg);
+            box-shadow: 0 2px 10px var(--shadow);
+            padding: 15px 0;
+            width: 100%;
+            overflow: visible;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            overflow: visible;
+        }
+        
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .language-selector {
+            background: var(--card-bg);
+            border: 1px solid #ffd700;
+            border-radius: 50px;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: 0.8em;
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+        
+        .language-selector:hover {
+            transform: scale(1.02);
+            border-width: 2px;
+        }
+        
+        .theme-toggle {
+            background: var(--card-bg);
+            border: 1px solid #ffd700;
+            border-radius: 50px;
+            padding: 5px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: 0.8em;
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.02);
+            border-width: 2px;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 50px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            font-size: 0.8em;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+            transform: scale(1.02);
+            border: 1px solid #ffd700;
+        }
+        
+        .logo-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .company-logo {
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .company-title {
+            font-family: 'Great Vibes', 'Satisfy', cursive;
+            font-size: 3em;
+            font-weight: 800;
+            margin: 0;
+            line-height: 1.2;
+            overflow: visible;
+            letter-spacing: 2px;
+            padding: 0.2em 0.5em;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        
+        .company-title span {
+            font-family: 'Great Vibes', 'Satisfy', cursive;
+            font-weight: 800;
+        }
+        
+        .company-title .letter-b {
+            font-size: 1.08em;
+            display: inline-block;
+            margin-right: 0.05em;
+            font-weight: 900;
+        }
+        
+        .company-title .better-text {
+            font-size: 1em;
+            font-weight: 800;
+        }
+        
+        .company-title .letter-p {
+            font-size: 1.06em;
+            display: inline-block;
+            margin-right: 0.05em;
+            font-weight: 900;
+        }
+        
+        .company-title .properties-text {
+            font-size: 1em;
+            font-weight: 800;
+        }
+        
+        .company-tagline {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1em;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            position: relative;
+            font-style: italic;
+            display: inline-block;
+            padding-bottom: 8px;
+            margin-top: 5px;
+        }
+        
+        .company-tagline:before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #ffd700, #ff8800);
+        }
+        
+        /* Recently Viewed Section */
+        .recently-viewed {
+            background: var(--filter-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #ffd700;
+        }
+        
+        .recently-viewed h3 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .recent-grid {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .recent-item {
+            min-width: 150px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .recent-item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .recent-item img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+        }
+        
+        .recent-item p {
+            padding: 8px;
+            font-size: 0.8em;
+            text-align: center;
+        }
+        
+        .filters-section {
+            background: var(--filter-bg);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px var(--shadow);
+        }
+        
+        .filters-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .filters-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            font-size: 1em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+        
+        .filter-group input, .filter-group select {
+            padding: 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            font-size: 1em;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            height: 48px;
+        }
+        
+        .filter-buttons-group {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            height: 48px;
+        }
+        
+        .btn-primary, .btn-reset-icon {
+            padding: 0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 700;
+            flex: 1;
+            text-align: center;
+            transition: all 0.3s;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+            color: #2c3e50;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #ffb347 0%, #ff8c00 100%);
+            transform: translateY(-2px);
+        }
+        
+        .btn-reset-icon {
+            background: #95a5a6;
+            color: white;
+            text-decoration: none;
+            font-size: 1.2em;
+        }
+        
+        .btn-reset-icon:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+        }
+        
+        .listing-tabs {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 12px 30px;
+            background: var(--card-bg);
+            border: 2px solid #ffd700;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 700;
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+            color: #2c3e50;
+        }
+        
+        .tab-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .properties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .property-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px var(--shadow);
+            transition: transform 0.3s;
+        }
+        
+        .property-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .property-images {
+            position: relative;
+            height: 240px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .slideshow-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .slideshow-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        .slideshow-image.active {
+            opacity: 1;
+        }
+        
+        .property-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: var(--badge-bg);
+            color: #2c3e50;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            z-index: 2;
+        }
+        
+        .property-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            z-index: 2;
+        }
+        
+        .listing-type-badge {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: #ffd700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            z-index: 2;
+        }
+        
+        .bottom-badges {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 15;
+        }
+        
+        .property-type-badge {
+            background: rgba(0,0,0,0.7);
+            color: #ffd700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .photo-counter {
+            background: rgba(0,0,0,0.7);
+            color: #ffd700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: bold;
+            border: 1px solid #ffd700;
+        }
+        
+        .status-Available { background: #4caf50; color: white; }
+        .status-Under-Offer { background: #ff9800; color: white; }
+        .status-Sold { background: #f44336; color: white; }
+        .status-Rented { background: #9c27b0; color: white; }
+        .status-Leased { background: #3f51b5; color: white; }
+        
+        .property-details {
+            padding: 20px;
+        }
+        
+        .property-title {
+            font-size: 1.4em;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .property-price {
+            font-size: 1.8em;
+            font-weight: bold;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .views-counter {
+            font-size: 0.8em;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+        
+        .property-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 12px 0;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .feature {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+        
+        .feature i {
+            margin-right: 8px;
+            color: #ffd700;
+        }
+        
+        .contact-icons {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 12px;
+            background: var(--contact-icon-bg);
+            border-radius: 8px;
+            justify-content: space-around;
+        }
+        
+        .contact-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            transition: transform 0.3s;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        
+        .contact-icon i {
+            font-size: 1.8em;
+        }
+        
+        .contact-icon:hover {
+            transform: translateY(-3px);
+        }
+        
+        .contact-icon.whatsapp:hover i { color: #25D366; }
+        .contact-icon.phone:hover i { color: #4caf50; }
+        .contact-icon.email:hover i { color: #ff4444; }
+        .contact-icon.facebook:hover i { color: #1877f2; }
+        .contact-icon.instagram:hover i { color: #e4405f; }
+        
+        .location-btn {
+            background: var(--btn-location-bg);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            width: 100%;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .map-container {
+            margin: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.5s ease-out, opacity 0.3s ease-out;
+        }
+        
+        .map-container.active {
+            max-height: 250px;
+            opacity: 1;
+            margin: 15px 0;
+        }
+        
+        .property-map {
+            width: 100%;
+            height: 250px;
+            border: none;
+        }
+        
+        .property-description {
+            color: var(--text-secondary);
+            font-size: 1em;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+        
+        .expiring-warning {
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 0.95em;
+            animation: pulse 2s infinite;
+            font-weight: 600;
+        }
+        
+        .urgent-warning { background: #ff4444; color: white; }
+        .info-warning { background: #ff9800; color: white; }
+        .sold-warning { background: #4caf50; color: white; }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        .property-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .btn-view, .btn-schedule {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 700;
+        }
+        
+        .btn-view {
+            background: #2196f3;
+            color: white;
+        }
+        
+        .btn-schedule {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+            color: #2c3e50;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background: var(--card-bg);
+            margin: 5% auto;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 10px;
+            position: relative;
+            color: var(--text-primary);
+        }
+        
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            font-size: 32px;
+            cursor: pointer;
+        }
+        
+        .details-modal {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            overflow-y: auto;
+        }
+        
+        .details-modal-content {
+            background: var(--card-bg);
+            margin: 2% auto;
+            padding: 30px;
+            width: 90%;
+            max-width: 1200px;
+            border-radius: 15px;
+            position: relative;
+            color: var(--text-primary);
+        }
+        
+        .details-close {
+            position: absolute;
+            right: 25px;
+            top: 20px;
+            font-size: 40px;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .details-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .details-gallery img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .details-gallery img:hover {
+            transform: scale(1.05);
+        }
+        
+        .main-detail-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .details-info {
+            padding: 20px;
+        }
+        
+        .details-info h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .details-price {
+            font-size: 2em;
+            font-weight: bold;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 15px 0;
+        }
+        
+        .views-count {
+            font-size: 0.9em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        
+        .details-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 20px 0;
+            padding: 15px 0;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .details-feature {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1em;
+        }
+        
+        .details-feature i {
+            color: #ffd700;
+        }
+        
+        .details-description {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin: 20px 0;
+        }
+        
+        /* Mortgage Calculator */
+        .mortgage-calculator {
+            background: var(--contact-icon-bg);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .mortgage-calculator h3 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+        
+        .calc-input-group {
+            margin-bottom: 15px;
+        }
+        
+        .calc-input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        
+        .calc-input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 1em;
+        }
+        
+        .calc-result {
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #2c3e50 0%, #1a2632 100%);
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            color: #ffd700;
+            font-size: 1.3em;
+            border: 1px solid #ffd700;
+        }
+        
+        /* Share Buttons */
+        .share-section {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .share-banner {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a2632 100%);
+            color: #ffd700;
+            text-align: center;
+            padding: 10px;
+            font-weight: 700;
+            font-size: 1em;
+            letter-spacing: 1px;
+        }
+
+        .share-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px;
+            background: var(--contact-icon-bg);
+        }
+        
+        .share-btn {
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            transition: transform 0.3s;
+        }
+        
+        .share-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .share-facebook { background: #1877f2; }
+        .share-twitter { background: #000000; }
+        .share-whatsapp { background: #25d366; }
+        .share-email { background: #ea4335; }
+        
+        .details-contact {
+            background: var(--contact-icon-bg);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            font-size: 1em;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            font-size: 1em;
+            background: var(--input-bg);
+            color: var(--text-primary);
+        }
+        
+        .footer {
+            background: var(--footer-bg);
+            color: white;
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 50px;
+        }
+        
+        .footer .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .footer .contact-info a {
+            color: #ffd700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .footer .contact-info a:hover {
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            body { font-size: 16px; }
+            .company-title { font-size: 2em; }
+            .company-tagline { font-size: 0.9em; }
+            .properties-grid { grid-template-columns: 1fr; }
+            .filters-row { grid-template-columns: 1fr; }
+            .listing-tabs { flex-wrap: wrap; }
+            .top-bar { justify-content: center; margin-bottom: 20px; }
+            .logo-section { margin-bottom: 20px; }
+            .filter-buttons {
+                height: auto;
+                flex-direction: column;
+            }
+            .btn-primary, .btn-reset-icon {
+                height: 48px;
+            }
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+            .calc-result {
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="container">
+            <div class="top-bar">
+                <div class="nav-buttons">
+                    <select id="languageSelector" class="language-selector">
+                        <option value="en">🌐 English</option>
+                        <option value="es">🇪🇸 Español</option>
+                        <option value="fr">🇫🇷 Français</option>
+                        <option value="pt">🇵🇹 Português</option>
+                        <option value="zh">🇨🇳 中文</option>
+                    </select>
+                    <button class="theme-toggle" id="themeToggle">
+                        <i class="fas fa-moon"></i>
+                        <span>Dark Mode</span>
+                    </button>
+                    <a href="/admin" class="btn-secondary">Admin Login</a>
+                </div>
+            </div>
+            
+            <div class="logo-section">
+                <div class="company-logo">
+                    <h1 class="company-title">
+                        <span class="letter-b">B</span><span class="better-text">etter</span> 
+                        <span class="letter-p">P</span><span class="properties-text">roperties</span>
+                    </h1>
+                    <p class="company-tagline" id="companyTagline">{{ config.sub }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Recently Viewed Section -->
+        <div id="recentlyViewed" class="recently-viewed" style="display: none;">
+            <h3><i class="fas fa-history"></i> Recently Viewed Properties</h3>
+            <div id="recentGrid" class="recent-grid"></div>
+        </div>
+        
+        <div class="listing-tabs">
+            <button class="tab-btn active" data-type="all" id="tabAll">🏠 All Properties</button>
+            <button class="tab-btn" data-type="sale" id="tabSale">💰 For Sale</button>
+            <button class="tab-btn" data-type="rent" id="tabRent">📋 For Rent</button>
+            <button class="tab-btn" data-type="lease" id="tabLease">📄 For Lease</button>
+        </div>
+        
+        <div class="filters-section">
+            <form method="GET" action="/" id="filterForm">
+                <input type="hidden" name="listing_type" id="listingTypeInput" value="{{ selected_listing_type|default('') }}">
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <label id="searchLabel"><i class="fas fa-search"></i> Search Properties</label>
+                        <input type="text" name="search" id="searchInput" value="{{ search }}" placeholder="Search by title or description...">
+                    </div>
+                    <div class="filter-group">
+                        <label id="areaLabel"><i class="fas fa-map-marker-alt"></i> Area</label>
+                        <select name="area" id="areaSelect">
+                            <option value="" id="allAreasOption">All Areas</option>
+                            {% for a in areas %}
+                                <option value="{{ a }}" {% if selected_area == a %}selected{% endif %}>{{ a }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label id="propertyTypeLabel"><i class="fas fa-building"></i> Property Type</label>
+                        <select name="property_type" id="propertyTypeSelect">
+                            <option value="" id="allTypesOption">All Types</option>
+                            <option value="residential" id="residentialOption">🏠 Residential</option>
+                            <option value="commercial" id="commercialOption">🏢 Commercial/Business</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label id="statusLabel"><i class="fas fa-tag"></i> Status</label>
+                        <select name="status" id="statusSelect">
+                            <option value="" id="allStatusOption">All Status</option>
+                            <option value="Available" id="availableOption">Available</option>
+                            <option value="Under Offer" id="underOfferOption">Under Offer</option>
+                            <option value="Sold" id="soldOption">Sold</option>
+                            <option value="Rented" id="rentedOption">Rented</option>
+                            <option value="Leased" id="leasedOption">Leased</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <label id="minPriceLabel"><i class="fas fa-dollar-sign"></i> Min Price</label>
+                        <input type="number" name="min_price" id="minPriceInput" value="{{ min_price }}" placeholder="Min Price">
+                    </div>
+                    <div class="filter-group">
+                        <label id="maxPriceLabel"><i class="fas fa-dollar-sign"></i> Max Price</label>
+                        <input type="number" name="max_price" id="maxPriceInput" value="{{ max_price }}" placeholder="Max Price">
+                    </div>
+                    <div class="filter-group">
+                        <label id="sortLabel"><i class="fas fa-sort"></i> Sort By</label>
+                        <select name="sort" id="sortSelect">
+                            <option value="newest" id="newestOption">Newest First</option>
+                            <option value="price_asc" id="priceAscOption">Price: Low to High</option>
+                            <option value="price_desc" id="priceDescOption">Price: High to Low</option>
+                        </select>
+                    </div>
+                    <div class="filter-group filter-buttons-group">
+                        <div class="filter-buttons">
+                            <button type="submit" class="btn-primary" id="applyFiltersBtn"><i class="fas fa-filter"></i> Apply Filters</button>
+                            <a href="/" class="btn-reset-icon" id="resetBtn"><i class="fas fa-undo-alt"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <div class="properties-grid" id="propertiesGrid">
+            {% for p in props %}
+                <div class="property-card" data-property-id="{{ p.id }}" data-listing-type="{{ p.listing_type|default('sale') }}" data-property-type="{{ p.property_type|default('residential') }}">
+                    <div class="property-images" onclick="openDetailsModal({{ p.id }})">
+                        <div class="slideshow-container" id="slideshow-{{ p.id }}">
+                            {% if p.images and p.images|length > 0 %}
+                                {% for img in p.images %}
+                                    <img src="{{ img }}" alt="{{ p.title }}" class="slideshow-image{% if loop.first %} active{% endif %}" data-slide-index="{{ loop.index0 }}">
+                                {% endfor %}
+                            {% else %}
+                                <img src="https://via.placeholder.com/400x300?text=No+Image" alt="No Image" class="slideshow-image active">
+                            {% endif %}
+                        </div>
+                        {% if p.badge %}
+                            <div class="property-badge">{{ p.badge }}</div>
+                        {% endif %}
+                        <div class="property-status status-{{ p.status|replace(' ', '-') }}">
+                            {{ p.status }}
+                        </div>
+                        <div class="listing-type-badge">
+                            {% if p.listing_type == 'sale' %}💰 FOR SALE{% elif p.listing_type == 'rent' %}📋 FOR RENT{% elif p.listing_type == 'lease' %}📄 FOR LEASE{% else %}💰 FOR SALE{% endif %}
+                        </div>
+                        <div class="bottom-badges">
+                            <div class="property-type-badge">
+                                {% if p.property_type == 'residential' %}🏠 Residential{% else %}🏢 Commercial{% endif %}
+                            </div>
+                            {% if p.images and p.images|length > 0 %}
+                            <div class="photo-counter">{{ p.images|length }} photos</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="property-details">
+                        <h3 class="property-title">{{ p.title }}</h3>
+                        <div class="property-price">${{ fmt_price(p.price) }}{% if p.listing_type == 'rent' or p.listing_type == 'lease' %}/month{% endif %}</div>
+                        <div class="views-counter"><i class="fas fa-eye"></i> {{ p.views|default(0) }} views</div>
+                        
+                        <div class="property-features">
+                            {% if p.property_type == 'residential' %}
+                                <span class="feature"><i class="fas fa-bed"></i> <span class="beds-count">{{ p.bedrooms|default(0) }}</span> <span class="bed-text">bed</span><span class="bed-plural">{{ 's' if p.bedrooms|default(0) != 1 }}</span></span>
+                                <span class="feature"><i class="fas fa-bath"></i> <span class="baths-count">{{ p.bathrooms|default(0) }}</span> <span class="bath-text">bath</span><span class="bath-plural">{{ 's' if p.bathrooms|default(0) != 1 }}</span></span>
+                                <span class="feature"><i class="fas fa-arrows-alt"></i> {{ p.sqft|default(0) }} sq ft</span>
+                            {% else %}
+                                <span class="feature"><i class="fas fa-briefcase"></i> {{ p.offices|default(0) }} office{{ 's' if p.offices|default(0) != 1 }}</span>
+                                <span class="feature"><i class="fas fa-parking"></i> {{ p.parking_spaces|default(0) }} parking</span>
+                                <span class="feature"><i class="fas fa-arrows-alt"></i> {{ p.sqft|default(0) }} sq ft</span>
+                            {% endif %}
+                            <span class="feature"><i class="fas fa-map-marker-alt"></i> {{ p.area }}</span>
+                        </div>
+                        
+                        <div class="contact-icons">
+                            <a href="https://wa.me/{{ config.whatsapp }}" target="_blank" class="contact-icon whatsapp">
+                                <i class="fab fa-whatsapp"></i>
+                                <span class="whatsapp-text">WhatsApp</span>
+                            </a>
+                            <a href="tel:{{ config.phone|replace('+', '')|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}" class="contact-icon phone">
+                                <i class="fas fa-phone-alt"></i>
+                                <span class="call-text">Call</span>
+                            </a>
+                            <a href="/cdn-cgi/l/email-protection#413a3a61222e2f2728266f242c20282d613c3c" class="contact-icon email">
+                                <i class="fas fa-envelope"></i>
+                                <span class="email-text">Email</span>
+                            </a>
+                            <a href="{{ config.facebook }}" target="_blank" class="contact-icon facebook">
+                                <i class="fab fa-facebook-f"></i>
+                                <span class="facebook-text">Facebook</span>
+                            </a>
+                            <a href="{{ config.instagram }}" target="_blank" class="contact-icon instagram">
+                                <i class="fab fa-instagram"></i>
+                                <span class="instagram-text">Instagram</span>
+                            </a>
+                        </div>
+                        
+                        <button class="location-btn" onclick="event.stopPropagation(); toggleMap({{ p.id }}, '{{ p.area }}')">
+                            <i class="fas fa-map-pin"></i> <span class="location-text">View Location</span>
+                        </button>
+                        
+                        <div id="map-{{ p.id }}" class="map-container">
+                            <iframe id="map-frame-{{ p.id }}" class="property-map" frameborder="0" allowfullscreen loading="lazy"></iframe>
+                        </div>
+                        
+                        <div class="property-description">
+                            {{ p.description[:100] }}{% if p.description|length > 100 %}...{% endif %}
+                        </div>
+                        
+                        <div class="property-actions">
+                            <button class="btn-view" onclick="openDetailsModal({{ p.id }})"><i class="fas fa-info-circle"></i> <span class="view-details-text">View Details</span></button>
+                            <button class="btn-schedule" onclick="event.stopPropagation(); openModal({{ p.id }}, '{{ p.title|replace("'", "\\'") }}')"><i class="fas fa-calendar-plus"></i> <span class="schedule-text">Schedule Viewing</span></button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        {% if not props %}
+            <div style="text-align: center; padding: 50px;" id="noPropertiesDiv">
+                <h3 id="noPropertiesText">No properties found</h3>
+                <p id="adjustFiltersText">Try adjusting your filters</p>
+            </div>
+        {% endif %}
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="pagination" style="display:flex;justify-content:center;align-items:center;gap:10px;margin:30px 0;flex-wrap:wrap;">
+            {% if page > 1 %}
+                <a href="?page={{ page - 1 }}&search={{ search }}&area={{ selected_area }}&status={{ selected_status }}&property_type={{ selected_property_type }}&listing_type={{ selected_listing_type }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort }}"
+                   style="padding:10px 18px;background:var(--card-bg);border:1px solid #ffd700;border-radius:5px;color:var(--text-primary);text-decoration:none;font-weight:600;">
+                   &laquo; Prev
+                </a>
+            {% endif %}
+            {% for p_num in range(1, total_pages + 1) %}
+                <a href="?page={{ p_num }}&search={{ search }}&area={{ selected_area }}&status={{ selected_status }}&property_type={{ selected_property_type }}&listing_type={{ selected_listing_type }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort }}"
+                   style="padding:10px 18px;border-radius:5px;text-decoration:none;font-weight:600;
+                          {% if p_num == page %}background:linear-gradient(135deg,#ffd700,#ffb347);color:#2c3e50;border:1px solid #ffd700;{% else %}background:var(--card-bg);border:1px solid #ffd700;color:var(--text-primary);{% endif %}">
+                   {{ p_num }}
+                </a>
+            {% endfor %}
+            {% if page < total_pages %}
+                <a href="?page={{ page + 1 }}&search={{ search }}&area={{ selected_area }}&status={{ selected_status }}&property_type={{ selected_property_type }}&listing_type={{ selected_listing_type }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort }}"
+                   style="padding:10px 18px;background:var(--card-bg);border:1px solid #ffd700;border-radius:5px;color:var(--text-primary);text-decoration:none;font-weight:600;">
+                   Next &raquo;
+                </a>
+            {% endif %}
+            <span style="color:var(--text-muted);font-size:0.9em;">{{ total_props }} properties total</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div id="detailsModal" class="details-modal">
+        <div class="details-modal-content">
+            <span class="details-close" onclick="closeDetailsModal()">&times;</span>
+            <div id="detailsContent"></div>
+        </div>
+    </div>
+    
+    <div id="viewingModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Schedule a Viewing</h2>
+            <form id="viewingForm">
+                <input type="hidden" id="property_id">
+                <div class="form-group">
+                    <label id="propertyLabel">Property</label>
+                    <input type="text" id="property_title" readonly>
+                </div>
+                <div class="form-group">
+                    <label id="nameLabel">Your Name *</label>
+                    <input type="text" id="visitor_name" required>
+                </div>
+                <div class="form-group">
+                    <label id="emailLabel">Email *</label>
+                    <input type="email" id="visitor_email" required>
+                </div>
+                <div class="form-group">
+                    <label id="phoneLabel">Phone *</label>
+                    <input type="tel" id="visitor_phone" required>
+                </div>
+                <div class="form-group">
+                    <label id="datetimeLabel">Preferred Date & Time *</label>
+                    <input type="datetime-local" id="visit_datetime" required>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;" id="submitBtn">Submit Request</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <div class="container">
+            <p><strong>Better Properties</strong> - <span id="footerSub">{{ config.sub }}</span></p>
+            <div class="contact-info">
+                <a href="https://wa.me/{{ config.whatsapp }}" target="_blank"><i class="fab fa-whatsapp"></i> <span id="footerWhatsapp">WhatsApp</span></a>
+                <a href="tel:{{ config.phone|replace('+', '')|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}"><i class="fas fa-phone-alt"></i> <span id="footerPhone">{{ config.phone }}</span></a>
+                <a href="/cdn-cgi/l/email-protection#cdb6b6edaea2a3aba4aae3a8a0aca4a1edb0b0"><i class="fas fa-envelope"></i> <span id="footerEmail">{{ config.email }}</span></a>
+                <a href="{{ config.facebook }}" target="_blank"><i class="fab fa-facebook-f"></i> <span id="footerFacebook">Facebook</span></a>
+                <a href="{{ config.instagram }}" target="_blank"><i class="fab fa-instagram"></i> <span id="footerInstagram">Instagram</span></a>
+                <span><i class="fas fa-map-marker-alt"></i> <span id="footerLocation">{{ config.location }}</span></span>
+            </div>
+            <p style="margin-top: 20px;">&copy; 2026 Better Properties. All rights reserved.</p>
+        </div>
+    </div>
+    
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+        // ── THEME (Dark mode is DEFAULT) ─────────────────────────────────────────
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                body.classList.remove('dark-mode');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i><span>Dark Mode</span>';
+            } else {
+                body.classList.add('dark-mode');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i><span>Light Mode</span>';
+            }
+        }
+
+        // Default is dark — only switch to light if user explicitly chose light before
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        applyTheme(savedTheme);
+
+        themeToggle.addEventListener('click', function() {
+            const isDark = body.classList.contains('dark-mode');
+            const newTheme = isDark ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+        
+        // TRANSLATIONS (same as before - keeping for brevity)
+        const translations = {
+            en: {
+                searchLabel: 'Search Properties', areaLabel: 'Area', propertyTypeLabel: 'Property Type', statusLabel: 'Status',
+                minPriceLabel: 'Min Price', maxPriceLabel: 'Max Price', sortLabel: 'Sort By',
+                applyFilters: 'Apply Filters', reset: 'Reset',
+                allAreas: 'All Areas', allTypes: 'All Types', allStatus: 'All Status',
+                residential: 'Residential', commercial: 'Commercial/Business',
+                available: 'Available', underOffer: 'Under Offer', sold: 'Sold', rented: 'Rented', leased: 'Leased',
+                newest: 'Newest First', priceAsc: 'Price: Low to High', priceDesc: 'Price: High to Low',
+                viewLocation: 'View Location', whatsapp: 'WhatsApp', call: 'Call', email: 'Email',
+                facebook: 'Facebook', instagram: 'Instagram',
+                viewDetails: 'View Details', scheduleViewing: 'Schedule Viewing',
+                scheduleTitle: 'Schedule a Viewing', property: 'Property', yourName: 'Your Name *',
+                yourEmail: 'Email *', yourPhone: 'Phone *', preferredDateTime: 'Preferred Date & Time *',
+                submit: 'Submit Request', noProperties: 'No properties found', adjustFilters: 'Try adjusting your filters',
+                expiringSoon: '⚠️ EXPIRING SOON! ⚠️', removedIn: 'This listing will be removed in',
+                day: 'day', days: 'days', soldText: '📢 SOLD', rentedText: '📢 RENTED', leasedText: '📢 LEASED',
+                soldMessage: 'This property has been sold', rentedMessage: 'This property has been rented',
+                leasedMessage: 'This property has been leased',
+                propertySoldRemovedIn: 'This property was sold and will be removed in',
+                propertyRentedRemovedIn: 'This property was rented and will be removed in',
+                propertyLeasedRemovedIn: 'This property was leased and will be removed in',
+                bed: 'bed', beds: 'beds', bath: 'bath', baths: 'baths',
+                allProperties: 'All Properties', forSale: 'For Sale', forRent: 'For Rent', forLease: 'For Lease'
+            },
+            es: {
+                searchLabel: 'Buscar Propiedades', areaLabel: 'Área', propertyTypeLabel: 'Tipo de Propiedad', statusLabel: 'Estado',
+                minPriceLabel: 'Precio Mínimo', maxPriceLabel: 'Precio Máximo', sortLabel: 'Ordenar por',
+                applyFilters: 'Aplicar Filtros', reset: 'Reiniciar',
+                allAreas: 'Todas las Áreas', allTypes: 'Todos los Tipos', allStatus: 'Todos los Estados',
+                residential: 'Residencial', commercial: 'Comercial',
+                available: 'Disponible', underOffer: 'En Oferta', sold: 'Vendido', rented: 'Alquilado', leased: 'Arrendado',
+                newest: 'Más Recientes', priceAsc: 'Precio: Menor a Mayor', priceDesc: 'Precio: Mayor a Menor',
+                viewLocation: 'Ver Ubicación', whatsapp: 'WhatsApp', call: 'Llamar', email: 'Correo',
+                facebook: 'Facebook', instagram: 'Instagram',
+                viewDetails: 'Ver Detalles', scheduleViewing: 'Agendar Visita',
+                scheduleTitle: 'Agendar una Visita', property: 'Propiedad', yourName: 'Su Nombre *',
+                yourEmail: 'Correo *', yourPhone: 'Teléfono *', preferredDateTime: 'Fecha y Hora Preferida *',
+                submit: 'Enviar Solicitud', noProperties: 'No se encontraron propiedades', adjustFilters: 'Intente ajustar sus filtros',
+                expiringSoon: '⚠️ ¡EXPIRANDO PRONTO! ⚠️', removedIn: 'Esta propiedad será eliminada en',
+                day: 'día', days: 'días', soldText: '📢 VENDIDO', rentedText: '📢 ALQUILADO', leasedText: '📢 ARRENDADO',
+                soldMessage: 'Esta propiedad ha sido vendida', rentedMessage: 'Esta propiedad ha sido alquilada',
+                leasedMessage: 'Esta propiedad ha sido arrendada',
+                propertySoldRemovedIn: 'Esta propiedad fue vendida y será eliminada en',
+                propertyRentedRemovedIn: 'Esta propiedad fue alquilada y será eliminada en',
+                propertyLeasedRemovedIn: 'Esta propiedad fue arrendada y será eliminada en',
+                bed: 'cama', beds: 'camas', bath: 'baño', baths: 'baños',
+                allProperties: 'Todas las Propiedades', forSale: 'En Venta', forRent: 'En Alquiler', forLease: 'En Arriendo'
+            },
+            fr: {
+                searchLabel: 'Rechercher des Biens', areaLabel: 'Zone', propertyTypeLabel: 'Type de Bien', statusLabel: 'Statut',
+                minPriceLabel: 'Prix Minimum', maxPriceLabel: 'Prix Maximum', sortLabel: 'Trier par',
+                applyFilters: 'Appliquer Filtres', reset: 'Réinitialiser',
+                allAreas: 'Toutes les Zones', allTypes: 'Tous les Types', allStatus: 'Tous les Statuts',
+                residential: 'Résidentiel', commercial: 'Commercial',
+                available: 'Disponible', underOffer: 'En Offre', sold: 'Vendu', rented: 'Loué', leased: 'Bail',
+                newest: 'Plus Récents', priceAsc: 'Prix: Croissant', priceDesc: 'Prix: Décroissant',
+                viewLocation: 'Voir Emplacement', whatsapp: 'WhatsApp', call: 'Appeler', email: 'E-mail',
+                facebook: 'Facebook', instagram: 'Instagram',
+                viewDetails: 'Voir Détails', scheduleViewing: 'Planifier Visite',
+                scheduleTitle: 'Planifier une Visite', property: 'Propriété', yourName: 'Votre Nom *',
+                yourEmail: 'E-mail *', yourPhone: 'Téléphone *', preferredDateTime: 'Date et Heure Préférées *',
+                submit: 'Soumettre', noProperties: 'Aucun bien trouvé', adjustFilters: 'Essayez d\'ajuster vos filtres',
+                expiringSoon: '⚠️ EXPIRE BIENTÔT! ⚠️', removedIn: 'Cette annonce sera supprimée dans',
+                day: 'jour', days: 'jours', soldText: '📢 VENDU', rentedText: '📢 LOUÉ', leasedText: '📢 BAIL',
+                soldMessage: 'Ce bien a été vendu', rentedMessage: 'Ce bien a été loué', leasedMessage: 'Ce bien a été pris en bail',
+                propertySoldRemovedIn: 'Ce bien a été vendu et sera supprimé dans',
+                propertyRentedRemovedIn: 'Ce bien a été loué et sera supprimé dans',
+                propertyLeasedRemovedIn: 'Ce bien a été pris en bail et sera supprimé dans',
+                bed: 'chambre', beds: 'chambres', bath: 'salle de bain', baths: 'salles de bain',
+                allProperties: 'Tous les Biens', forSale: 'À Vendre', forRent: 'À Louer', forLease: 'En Bail'
+            },
+            pt: {
+                searchLabel: 'Pesquisar Imóveis', areaLabel: 'Área', propertyTypeLabel: 'Tipo de Imóvel', statusLabel: 'Status',
+                minPriceLabel: 'Preço Mínimo', maxPriceLabel: 'Preço Máximo', sortLabel: 'Ordenar por',
+                applyFilters: 'Aplicar Filtros', reset: 'Redefinir',
+                allAreas: 'Todas as Áreas', allTypes: 'Todos os Tipos', allStatus: 'Todos os Status',
+                residential: 'Residencial', commercial: 'Comercial',
+                available: 'Disponível', underOffer: 'Em Oferta', sold: 'Vendido', rented: 'Alugado', leased: 'Arrendado',
+                newest: 'Mais Recentes', priceAsc: 'Preço: Menor para Maior', priceDesc: 'Preço: Maior para Menor',
+                viewLocation: 'Ver Localização', whatsapp: 'WhatsApp', call: 'Ligar', email: 'E-mail',
+                facebook: 'Facebook', instagram: 'Instagram',
+                viewDetails: 'Ver Detalhes', scheduleViewing: 'Agendar Visita',
+                scheduleTitle: 'Agendar uma Visita', property: 'Propriedade', yourName: 'Seu Nome *',
+                yourEmail: 'E-mail *', yourPhone: 'Telefone *', preferredDateTime: 'Data e Hora Preferida *',
+                submit: 'Enviar', noProperties: 'Nenhum imóvel encontrado', adjustFilters: 'Tente ajustar seus filtros',
+                expiringSoon: '⚠️ EXPIRANDO EM BREVE! ⚠️', removedIn: 'Este anúncio será removido em',
+                day: 'dia', days: 'dias', soldText: '📢 VENDIDO', rentedText: '📢 ALUGADO', leasedText: '📢 ARRENDADO',
+                soldMessage: 'Este imóvel foi vendido', rentedMessage: 'Este imóvel foi alugado', leasedMessage: 'Este imóvel foi arrendado',
+                propertySoldRemovedIn: 'Este imóvel foi vendido e será removido em',
+                propertyRentedRemovedIn: 'Este imóvel foi alugado e será removido em',
+                propertyLeasedRemovedIn: 'Este imóvel foi arrendado e será removido em',
+                bed: 'quarto', beds: 'quartos', bath: 'banheiro', baths: 'banheiros',
+                allProperties: 'Todos os Imóveis', forSale: 'À Venda', forRent: 'Para Alugar', forLease: 'Para Arrendar'
+            },
+            zh: {
+                searchLabel: '搜索房产', areaLabel: '区域', propertyTypeLabel: '房产类型', statusLabel: '状态',
+                minPriceLabel: '最低价格', maxPriceLabel: '最高价格', sortLabel: '排序方式',
+                applyFilters: '应用筛选', reset: '重置',
+                allAreas: '所有区域', allTypes: '所有类型', allStatus: '所有状态',
+                residential: '住宅', commercial: '商业',
+                available: '可售', underOffer: '议价中', sold: '已售', rented: '已租', leased: '已租',
+                newest: '最新优先', priceAsc: '价格: 从低到高', priceDesc: '价格: 从高到低',
+                viewLocation: '查看位置', whatsapp: 'WhatsApp', call: '打电话', email: '电子邮件',
+                facebook: '脸书', instagram: '照片墙',
+                viewDetails: '查看详情', scheduleViewing: '预约看房',
+                scheduleTitle: '预约看房', property: '房产', yourName: '您的姓名 *',
+                yourEmail: '电子邮件 *', yourPhone: '电话号码 *', preferredDateTime: '首选日期和时间 *',
+                submit: '提交请求', noProperties: '未找到房产', adjustFilters: '尝试调整筛选条件',
+                expiringSoon: '⚠️ 即将到期！ ⚠️', removedIn: '此房源将在',
+                day: '天后', days: '天后', soldText: '📢 已售', rentedText: '📢 已租', leasedText: '📢 已租',
+                soldMessage: '此房产已售出', rentedMessage: '此房产已出租', leasedMessage: '此房产已出租',
+                propertySoldRemovedIn: '此房产已售出，将在',
+                propertyRentedRemovedIn: '此房产已出租，将在',
+                propertyLeasedRemovedIn: '此房产已出租，将在',
+                bed: '卧室', beds: '卧室', bath: '浴室', baths: '浴室',
+                allProperties: '所有房产', forSale: '出售', forRent: '出租', forLease: '长期出租'
+            }
+        };
+        
+        let currentLang = localStorage.getItem('language') || 'en';
+        
+        function updateLanguage() {
+            const t = translations[currentLang];
+            if (!t) return;
+            
+            document.getElementById('searchLabel').innerHTML = `<i class="fas fa-search"></i> ${t.searchLabel}`;
+            document.getElementById('areaLabel').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${t.areaLabel}`;
+            document.getElementById('propertyTypeLabel').innerHTML = `<i class="fas fa-building"></i> ${t.propertyTypeLabel}`;
+            document.getElementById('statusLabel').innerHTML = `<i class="fas fa-tag"></i> ${t.statusLabel}`;
+            document.getElementById('minPriceLabel').innerHTML = `<i class="fas fa-dollar-sign"></i> ${t.minPriceLabel}`;
+            document.getElementById('maxPriceLabel').innerHTML = `<i class="fas fa-dollar-sign"></i> ${t.maxPriceLabel}`;
+            document.getElementById('sortLabel').innerHTML = `<i class="fas fa-sort"></i> ${t.sortLabel}`;
+            document.getElementById('applyFiltersBtn').innerHTML = `<i class="fas fa-filter"></i> ${t.applyFilters}`;
+            document.getElementById('resetBtn').innerHTML = `<i class="fas fa-undo-alt"></i>`;
+            document.getElementById('allAreasOption').innerText = t.allAreas;
+            document.getElementById('allTypesOption').innerText = t.allTypes;
+            document.getElementById('allStatusOption').innerText = t.allStatus;
+            document.getElementById('residentialOption').innerHTML = `🏠 ${t.residential}`;
+            document.getElementById('commercialOption').innerHTML = `🏢 ${t.commercial}`;
+            document.getElementById('availableOption').innerText = t.available;
+            document.getElementById('underOfferOption').innerText = t.underOffer;
+            document.getElementById('soldOption').innerText = t.sold;
+            document.getElementById('rentedOption').innerText = t.rented;
+            document.getElementById('leasedOption').innerText = t.leased;
+            document.getElementById('newestOption').innerText = t.newest;
+            document.getElementById('priceAscOption').innerText = t.priceAsc;
+            document.getElementById('priceDescOption').innerText = t.priceDesc;
+            document.getElementById('tabAll').innerHTML = `🏠 ${t.allProperties}`;
+            document.getElementById('tabSale').innerHTML = `💰 ${t.forSale}`;
+            document.getElementById('tabRent').innerHTML = `📋 ${t.forRent}`;
+            document.getElementById('tabLease').innerHTML = `📄 ${t.forLease}`;
+            document.getElementById('modalTitle').innerText = t.scheduleTitle;
+            document.getElementById('propertyLabel').innerText = t.property;
+            document.getElementById('nameLabel').innerText = t.yourName;
+            document.getElementById('emailLabel').innerText = t.yourEmail;
+            document.getElementById('phoneLabel').innerText = t.yourPhone;
+            document.getElementById('datetimeLabel').innerText = t.preferredDateTime;
+            document.getElementById('submitBtn').innerHTML = t.submit;
+            const noPropsText = document.getElementById('noPropertiesText');
+            const adjustText = document.getElementById('adjustFiltersText');
+            if (noPropsText) noPropsText.innerText = t.noProperties;
+            if (adjustText) adjustText.innerText = t.adjustFilters;
+            document.getElementById('footerWhatsapp').innerText = t.whatsapp;
+            document.getElementById('footerFacebook').innerText = t.facebook;
+            document.getElementById('footerInstagram').innerText = t.instagram;
+            document.querySelectorAll('.location-text').forEach(el => el.innerText = t.viewLocation);
+            document.querySelectorAll('.whatsapp-text').forEach(el => el.innerText = t.whatsapp);
+            document.querySelectorAll('.call-text').forEach(el => el.innerText = t.call);
+            document.querySelectorAll('.email-text').forEach(el => el.innerText = t.email);
+            document.querySelectorAll('.facebook-text').forEach(el => el.innerText = t.facebook);
+            document.querySelectorAll('.instagram-text').forEach(el => el.innerText = t.instagram);
+            document.querySelectorAll('.view-details-text').forEach(el => el.innerText = t.viewDetails);
+            document.querySelectorAll('.schedule-text').forEach(el => el.innerText = t.scheduleViewing);
+            document.querySelectorAll('.bed-text').forEach(el => {
+                const count = parseInt(el.parentElement.querySelector('.beds-count')?.innerText || '1');
+                el.innerText = count === 1 ? t.bed : t.beds;
+            });
+            document.querySelectorAll('.bath-text').forEach(el => {
+                const count = parseInt(el.parentElement.querySelector('.baths-count')?.innerText || '1');
+                el.innerText = count === 1 ? t.bath : t.baths;
+            });
+            document.querySelectorAll('.expiring-soon-text').forEach(el => el.innerText = t.expiringSoon);
+            document.querySelectorAll('.removed-in-text').forEach(el => el.innerText = t.removedIn);
+            document.querySelectorAll('.sold-text').forEach(el => {
+                const text = el.innerText;
+                if (text.includes('SOLD')) el.innerText = t.soldText;
+                else if (text.includes('RENTED')) el.innerText = t.rentedText;
+                else if (text.includes('LEASED')) el.innerText = t.leasedText;
+            });
+            document.querySelectorAll('.sold-message-text').forEach(el => {
+                const text = el.innerText;
+                if (text.includes('sold')) el.innerText = t.soldMessage;
+                else if (text.includes('rented')) el.innerText = t.rentedMessage;
+                else if (text.includes('leased')) el.innerText = t.leasedMessage;
+            });
+            document.querySelectorAll('.day-text').forEach(el => {
+                const daysLeft = parseInt(el.parentElement.querySelector('.days-left')?.innerText || '1');
+                el.innerText = daysLeft === 1 ? t.day : t.days;
+            });
+            document.querySelectorAll('.info-warning .removed-in-text').forEach(el => {
+                const parent = el.parentElement;
+                const soldTextSpan = parent.querySelector('.sold-text');
+                if (soldTextSpan) {
+                    const statusText = soldTextSpan.innerText;
+                    if (statusText.includes('SOLD')) el.innerText = t.propertySoldRemovedIn;
+                    else if (statusText.includes('RENTED')) el.innerText = t.propertyRentedRemovedIn;
+                    else if (statusText.includes('LEASED')) el.innerText = t.propertyLeasedRemovedIn;
+                }
+            });
+        }
+        
+        const langSelect = document.getElementById('languageSelector');
+        langSelect.addEventListener('change', function(e) {
+            currentLang = e.target.value;
+            localStorage.setItem('language', currentLang);
+            updateLanguage();
+        });
+        
+        document.getElementById('languageSelector').value = currentLang;
+        updateLanguage();
+        
+        // Recently Viewed Functions
+        let recentlyViewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+        
+        function addToRecentlyViewed(property) {
+            recentlyViewed = recentlyViewed.filter(p => p.id !== property.id);
+            recentlyViewed.unshift(property);
+            recentlyViewed = recentlyViewed.slice(0, 5);
+            localStorage.setItem('recentlyViewed', JSON.stringify(recentlyViewed));
+            updateRecentlyViewedDisplay();
+        }
+        
+        function updateRecentlyViewedDisplay() {
+            const container = document.getElementById('recentGrid');
+            const section = document.getElementById('recentlyViewed');
+            
+            if (recentlyViewed.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            
+            section.style.display = 'block';
+            container.innerHTML = recentlyViewed.map(p => `
+                <div class="recent-item" onclick="openDetailsModal(${p.id})">
+                    <img src="${p.images && p.images[0] ? p.images[0] : 'https://via.placeholder.com/150x100?text=No+Image'}" alt="${p.title}">
+                    <p>${p.title}</p>
+                </div>
+            `).join('');
+        }
+        
+        // Slideshow initialization
+        let slideshowIntervals = {};
+        
+        function initSlideshows() {
+            document.querySelectorAll('.property-card').forEach(card => {
+                const propertyId = card.getAttribute('data-property-id');
+                const slideshowContainer = document.getElementById(`slideshow-${propertyId}`);
+                if (!slideshowContainer) return;
+                
+                const images = slideshowContainer.querySelectorAll('.slideshow-image');
+                if (images.length <= 1) return;
+                
+                let currentIndex = 0;
+                images[0].classList.add('active');
+                
+                card.addEventListener('mouseenter', () => {
+                    if (slideshowIntervals[propertyId]) clearInterval(slideshowIntervals[propertyId]);
+                    slideshowIntervals[propertyId] = setInterval(() => {
+                        images[currentIndex].classList.remove('active');
+                        currentIndex = (currentIndex + 1) % images.length;
+                        images[currentIndex].classList.add('active');
+                    }, 3000);
+                });
+                
+                card.addEventListener('mouseleave', () => {
+                    if (slideshowIntervals[propertyId]) {
+                        clearInterval(slideshowIntervals[propertyId]);
+                        delete slideshowIntervals[propertyId];
+                    }
+                    images.forEach((img, idx) => {
+                        if (idx === 0) img.classList.add('active');
+                        else img.classList.remove('active');
+                    });
+                    currentIndex = 0;
+                });
+            });
+        }
+        
+        // Mortgage Calculator
+        function calculateMortgage(price, downPaymentPercent, interestRate, years) {
+            const downPayment = price * (downPaymentPercent / 100);
+            const loanAmount = price - downPayment;
+            const monthlyRate = interestRate / 100 / 12;
+            const numberOfPayments = years * 12;
+            
+            if (monthlyRate === 0) return loanAmount / numberOfPayments;
+            
+            const monthlyPayment = loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments) / (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+            return monthlyPayment;
+        }
+        
+        function formatMoney(amount) {
+            return '$' + amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        // ── DETAILS MODAL ────────────────────────────────────────────────────────
+        // #3 fix: property title is set via data attribute, never injected into onclick HTML
+        // #4 fix: AbortController cleans up mortgage listeners on every open
+        let mortgageAbortController = null;
+
+        async function openDetailsModal(propertyId) {
+            try {
+                const response = await fetch(`/api/property/${propertyId}`);
+                if (!response.ok) throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                const property = await response.json();
+
+                addToRecentlyViewed(property);
+
+                const t = translations[currentLang] || translations.en;
+
+                let featuresHtml = '';
+                if (property.property_type === 'residential') {
+                    featuresHtml = `
+                        <div class="details-feature"><i class="fas fa-bed"></i> ${property.bedrooms || 0} ${property.bedrooms === 1 ? t.bed : t.beds}</div>
+                        <div class="details-feature"><i class="fas fa-bath"></i> ${property.bathrooms || 0} ${property.bathrooms === 1 ? t.bath : t.baths}</div>
+                        <div class="details-feature"><i class="fas fa-arrows-alt"></i> ${property.sqft || 0} sq ft</div>
+                    `;
+                } else {
+                    featuresHtml = `
+                        <div class="details-feature"><i class="fas fa-briefcase"></i> ${property.offices || 0} office${property.offices !== 1 ? 's' : ''}</div>
+                        <div class="details-feature"><i class="fas fa-parking"></i> ${property.parking_spaces || 0} parking space${property.parking_spaces !== 1 ? 's' : ''}</div>
+                        <div class="details-feature"><i class="fas fa-arrows-alt"></i> ${property.sqft || 0} sq ft</div>
+                    `;
+                }
+
+                let galleryHtml = '';
+                if (property.images && property.images.length > 0) {
+                    galleryHtml = `
+                        <img src="${property.images[0]}" alt="${property.title}" class="main-detail-image" id="mainDetailImage">
+                        <div class="details-gallery">
+                            ${property.images.map(img => `
+                                <img src="${img}" alt="${property.title}" onclick="document.getElementById('mainDetailImage').src=this.src">
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    galleryHtml = `<img src="https://via.placeholder.com/800x400?text=No+Image" alt="No Image" class="main-detail-image">`;
+                }
+
+                const shareUrl = encodeURIComponent(window.location.href);
+                const shareTitle = encodeURIComponent(property.title);
+
+                document.getElementById('detailsContent').innerHTML = `
+                    <div class="details-grid">
+                        <div class="details-gallery-section">
+                            ${galleryHtml}
+                        </div>
+                        <div class="details-info">
+                            <h2>${property.title}</h2>
+                            <div class="details-price">$${property.price.toLocaleString()}${property.listing_type === 'rent' || property.listing_type === 'lease' ? '/month' : ''}</div>
+                            <div class="views-count"><i class="fas fa-eye"></i> ${property.views || 0} views</div>
+                            <div class="details-features">${featuresHtml}<div class="details-feature"><i class="fas fa-map-marker-alt"></i> ${property.area || 'N/A'}</div><div class="details-feature"><i class="fas fa-tag"></i> ${property.status}</div></div>
+                            <div class="details-description">${property.description || 'No description available.'}</div>
+
+                            <div class="share-section">
+                                <div class="share-banner"><i class="fas fa-share-alt"></i> Share This Property</div>
+                                <div class="share-buttons">
+                                    <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" class="share-btn share-facebook"><i class="fab fa-facebook-f"></i> Share</a>
+                                    <a href="https://x.com/intent/tweet?text=${shareTitle}&url=${shareUrl}" target="_blank" class="share-btn share-twitter"><i class="fa-brands fa-x-twitter"></i> X</a>
+                                    <a href="https://wa.me/?text=${shareTitle}%20${shareUrl}" target="_blank" class="share-btn share-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                                    <a href="mailto:?subject=${shareTitle}&body=Check out this property: ${shareUrl}" class="share-btn share-email"><i class="fas fa-envelope"></i> Email</a>
+                                </div>
+                            </div>
+
+                            <div class="mortgage-calculator">
+                                <h3><i class="fas fa-calculator"></i> Mortgage Calculator</h3>
+                                <div class="calc-input-group">
+                                    <label>Down Payment (%)</label>
+                                    <input type="number" id="downPayment" value="10" step="5" min="0" max="50">
+                                </div>
+                                <div class="calc-input-group">
+                                    <label>Interest Rate (%)</label>
+                                    <input type="number" id="interestRate" value="5" step="0.5" min="0" max="20">
+                                </div>
+                                <div class="calc-input-group">
+                                    <label>Loan Term (years)</label>
+                                    <input type="number" id="loanTerm" value="30" step="5" min="5" max="30">
+                                </div>
+                                <div class="calc-result" id="calcResult">
+                                    Monthly Payment: ${formatMoney(calculateMortgage(property.price, 10, 5, 30))}
+                                </div>
+                            </div>
+
+                            <div class="details-contact">
+                                <h3>Contact Us</h3>
+                                <div class="contact-icons" style="margin-top: 10px;">
+                                    <a href="https://wa.me/{{ config.whatsapp }}" target="_blank" class="contact-icon whatsapp"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></a>
+                                    <a href="tel:{{ config.phone|replace('+', '')|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}" class="contact-icon phone"><i class="fas fa-phone-alt"></i><span>Call</span></a>
+                                    <a href="mailto:{{ config.email }}" class="contact-icon email"><i class="fas fa-envelope"></i><span>Email</span></a>
+                                    <a href="{{ config.facebook }}" target="_blank" class="contact-icon facebook"><i class="fab fa-facebook-f"></i><span>Facebook</span></a>
+                                    <a href="{{ config.instagram }}" target="_blank" class="contact-icon instagram"><i class="fab fa-instagram"></i><span>Instagram</span></a>
+                                </div>
+                                <!-- #3 fix: property id/title stored in data attributes, read by JS — no inline onclick injection -->
+                                <button class="btn-schedule details-schedule-btn"
+                                        data-property-id="${property.id}"
+                                        data-property-title="${property.title.replace(/"/g, '&quot;')}"
+                                        style="margin-top: 15px; width: 100%;">
+                                    <i class="fas fa-calendar-plus"></i> Schedule Viewing
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // #3 fix: safe event binding via data attributes
+                document.querySelector('.details-schedule-btn').addEventListener('click', function() {
+                    const pid   = this.dataset.propertyId;
+                    const title = this.dataset.propertyTitle;
+                    closeDetailsModal();
+                    openModal(pid, title);
+                });
+
+                // #4 fix: abort any previous mortgage listeners before adding new ones
+                if (mortgageAbortController) mortgageAbortController.abort();
+                mortgageAbortController = new AbortController();
+                const { signal } = mortgageAbortController;
+
+                const price = property.price;
+                const downPaymentInput  = document.getElementById('downPayment');
+                const interestRateInput = document.getElementById('interestRate');
+                const loanTermInput     = document.getElementById('loanTerm');
+                const calcResult        = document.getElementById('calcResult');
+
+                function updateMortgage() {
+                    const down    = parseFloat(downPaymentInput.value)  || 0;
+                    const rate    = parseFloat(interestRateInput.value) || 0;
+                    const term    = parseFloat(loanTermInput.value)     || 30;
+                    calcResult.innerHTML = `Monthly Payment: ${formatMoney(calculateMortgage(price, down, rate, term))}`;
+                }
+
+                downPaymentInput.addEventListener('input',  updateMortgage, { signal });
+                interestRateInput.addEventListener('input', updateMortgage, { signal });
+                loanTermInput.addEventListener('input',     updateMortgage, { signal });
+
+                document.getElementById('detailsModal').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading property details:', error);
+                alert('Error loading property details: ' + error.message);
+            }
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+            // Clean up mortgage listeners when modal closes
+            if (mortgageAbortController) { mortgageAbortController.abort(); mortgageAbortController = null; }
+        }
+        
+        // ── LISTING TYPE TABS — synced to hidden form field (#2 fix) ─────────────
+        // On load, restore active tab from the server-returned selected_listing_type
+        (function() {
+            const savedType = document.getElementById('listingTypeInput').value || 'all';
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.type === savedType ||
+                    (savedType === '' && btn.dataset.type === 'all'));
+            });
+            // Also apply client-side visibility so the page is consistent on load
+            filterByListingType(savedType === '' ? 'all' : savedType);
+        })();
+
+        function filterByListingType(type) {
+            document.querySelectorAll('.property-card').forEach(card => {
+                const listingType = card.getAttribute('data-listing-type');
+                card.style.display = (type === 'all' || type === '' || listingType === type) ? '' : 'none';
+            });
+        }
+
+        function activateTab(type) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.tab-btn[data-type="${type}"]`).classList.add('active');
+            // Write value to hidden input so the next form submit keeps the tab
+            document.getElementById('listingTypeInput').value = (type === 'all') ? '' : type;
+            // Also filter client-side immediately
+            filterByListingType(type);
+        }
+
+        document.getElementById('tabAll').addEventListener('click',   () => activateTab('all'));
+        document.getElementById('tabSale').addEventListener('click',  () => activateTab('sale'));
+        document.getElementById('tabRent').addEventListener('click',  () => activateTab('rent'));
+        document.getElementById('tabLease').addEventListener('click', () => activateTab('lease'));
+
+        // Property Type dropdown — client-side filter (doesn't need form sync, already a select in the form)
+        document.getElementById('propertyTypeSelect').addEventListener('change', function(e) {
+            const selectedType = e.target.value;
+            document.querySelectorAll('.property-card').forEach(card => {
+                const propertyType = card.getAttribute('data-property-type');
+                card.style.display = (selectedType === '' || propertyType === selectedType) ? '' : 'none';
+            });
+        });
+        
+        // Map Toggle - uses OpenStreetMap (no API key required)
+        function toggleMap(propertyId, area) {
+            const mapContainer = document.getElementById(`map-${propertyId}`);
+            const mapFrame = document.getElementById(`map-frame-${propertyId}`);
+            if (mapContainer.classList.contains('active')) {
+                mapContainer.classList.remove('active');
+                mapFrame.src = '';
+            } else {
+                const searchQuery = encodeURIComponent(`${area}, {{ config.location }}`);
+                mapFrame.src = `https://www.openstreetmap.org/export/embed.html?bbox=-62.5%2C10.0%2C-60.5%2C11.5&layer=mapnik&marker=&query=${searchQuery}`;
+                mapContainer.classList.add('active');
+            }
+        }
+        
+        function openModal(propertyId, propertyTitle) {
+            document.getElementById('property_id').value = propertyId;
+            document.getElementById('property_title').value = propertyTitle;
+            document.getElementById('viewingModal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('viewingModal').style.display = 'none';
+            document.getElementById('viewingForm').reset();
+        }
+        
+        document.getElementById('viewingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const data = {
+                property: document.getElementById('property_title').value,
+                name: document.getElementById('visitor_name').value,
+                email: document.getElementById('visitor_email').value,
+                phone: document.getElementById('visitor_phone').value,
+                datetime: document.getElementById('visit_datetime').value
+            };
+            try {
+                const response = await fetch('/viewing', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+                if (response.ok) {
+                    alert('Viewing request submitted successfully!');
+                    closeModal();
+                } else {
+                    alert('Error submitting request.');
+                }
+            } catch (error) {
+                alert('Error submitting request.');
+            }
+        });
+        
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('viewingModal')) closeModal();
+            if (event.target == document.getElementById('detailsModal')) closeDetailsModal();
+        };
+
+        // ── INIT on page load ─────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', function() {
+            initSlideshows();
+            updateRecentlyViewedDisplay();
+            // Re-apply language on load (updateLanguage already called above, but DOM
+            // may not have been fully ready the first time on some browsers)
+            updateLanguage();
+        });
+    </script>
+</body>
+</html>

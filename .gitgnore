@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+.env
+
+# Database
+better_properties.db
+*.db
+
+# Uploads (keep folder structure but not images)
+static/uploads/*.jpg
+static/uploads/*.png
+static/uploads/*.jpeg
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Flask
+instance/
+.webassets-cache
+
+# Logs
+*.log
+app.log
