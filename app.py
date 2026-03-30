@@ -318,6 +318,7 @@ def save_image(file, title, idx):
     fname = f"{safe}_{idx}_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
     path = os.path.join(UPLOAD_DIR, fname)
     file.save(path)
+    print(f"Image saved to: {path}")
     return f"/uploads/{fname}"
 
 def get_expiry_stats():
@@ -916,7 +917,11 @@ def change_my_password():
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     """Serve uploaded files from /tmp/uploads directory"""
-    return send_from_directory('/tmp/uploads', filename)
+    try:
+        return send_from_directory('/tmp/uploads', filename)
+    except Exception as e:
+        print(f"Error serving file {filename}: {e}")
+        return "File not found", 404
 
 # ── API for property data ────────────────────────────────────────
 @app.route("/admin/property/<int:pid>/json")
@@ -943,6 +948,18 @@ def get_public_property_json(pid):
     return jsonify(d)
 
 if __name__ == "__main__":
+    # Verify upload directory exists
+    if not os.path.exists('/tmp/uploads'):
+        os.makedirs('/tmp/uploads', exist_ok=True)
+        print("Created /tmp/uploads directory")
+    
+    # List existing files for debugging
+    try:
+        files = os.listdir('/tmp/uploads')
+        print(f"Existing files in uploads: {files}")
+    except:
+        print("Could not list uploads directory")
+    
     print(f"""
     ╔══════════════════════════════════════════════════════════╗
     ║     Better Properties - Real Estate Management System    ║
@@ -962,7 +979,7 @@ if __name__ == "__main__":
     ║  • CSRF Protection Enabled                              ║
     ║  • Password Change Routes Fixed (No more 404!)          ║
     ║  • Upload directory: /tmp/uploads (Leapcell compatible) ║
-    ║  • Images will be served correctly                      ║
+    ║  • Images will be served correctly from /uploads/       ║
     ╚══════════════════════════════════════════════════════════╝
     """)
     app.run(debug=True, port=5000)
