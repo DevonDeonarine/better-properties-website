@@ -60,8 +60,13 @@ else:
 
 print(f"Database path: {DB_PATH}")
 
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "static", "uploads")
+# ================================================================
+#  UPLOAD DIRECTORY - FIXED FOR LEAPCELL (using /tmp)
+# ================================================================
+# Leapcell only allows writing to /tmp directory
+UPLOAD_DIR = '/tmp/uploads'
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+print(f"Upload directory: {UPLOAD_DIR}")
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 MAX_FILE_SIZE = 5 * 1024 * 1024
@@ -313,7 +318,9 @@ def save_image(file, title, idx):
     fname = f"{safe}_{idx}_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
     path = os.path.join(UPLOAD_DIR, fname)
     file.save(path)
-    return f"/static/uploads/{fname}"
+    # Return URL path for browser access - note: this won't work directly on Leapcell
+    # You'll need to serve static files from /tmp/uploads or use external hosting
+    return f"/uploads/{fname}"
 
 def get_expiry_stats():
     conn = get_db()
@@ -907,6 +914,12 @@ def change_my_password():
     conn.close()
     return redirect(url_for("admin_dashboard") + "#settings")
 
+# ── Serve uploaded files from /tmp/uploads ────────────────────────
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    """Serve uploaded files from /tmp/uploads directory"""
+    return send_from_directory('/tmp/uploads', filename)
+
 # ── API for property data ────────────────────────────────────────
 @app.route("/admin/property/<int:pid>/json")
 @login_required
@@ -932,6 +945,9 @@ def get_public_property_json(pid):
     return jsonify(d)
 
 if __name__ == "__main__":
+    # Add send_from_directory import
+    from flask import send_from_directory
+    
     print(f"""
     ╔══════════════════════════════════════════════════════════╗
     ║     Better Properties - Real Estate Management System    ║
@@ -950,7 +966,7 @@ if __name__ == "__main__":
     ║  • Public API for property details                      ║
     ║  • CSRF Protection Enabled                              ║
     ║  • Password Change Routes Fixed (No more 404!)          ║
-    ║  • Debug logging for Add Property                       ║
+    ║  • Upload directory: /tmp/uploads (Leapcell compatible) ║
     ╚══════════════════════════════════════════════════════════╝
     """)
     app.run(debug=True, port=5000)
