@@ -20,33 +20,29 @@ app = Flask(__name__)
 # Use environment variable for secret key (works on Leapcell)
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 
-WHATSAPP_NUMBER   = "18681234567"        # no + or spaces
+WHATSAPP_NUMBER   = "18681234567"
 BUSINESS_EMAIL    = "info@betterproperties.com"
 BUSINESS_PHONE    = "+1 (868) 123-4567"
 BUSINESS_NAME     = "Better Properties"
 BUSINESS_SUB      = "Real Estate Services Ltd"
 BUSINESS_LOCATION = "Trinidad & Tobago"
 SOLD_EXPIRY_DAYS  = 7
-AUTO_CLEANUP_HOURS = 1  # Check every hour
+AUTO_CLEANUP_HOURS = 1
+MAX_PHOTOS = 21
 
 # Database path - MUST use /tmp on Leapcell (only writable directory)
-# On Leapcell serverless, only /tmp is writable
-# On local development, it will use the current directory
 if os.path.exists('/tmp') or os.name == 'posix':
-    # Running on Leapcell or similar serverless environment
     DB_PATH = '/tmp/better_properties.db'
 else:
-    # Local development (Windows)
     DB_PATH = os.path.join(os.path.dirname(__file__), "better_properties.db")
 
-print(f"Database path: {DB_PATH}")  # Helpful for debugging
+print(f"Database path: {DB_PATH}")
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "static", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# File upload restrictions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_FILE_SIZE = 5 * 1024 * 1024
 
 # Social Media Links
 FACEBOOK_URL    = "https://facebook.com/betterproperties"
@@ -61,7 +57,6 @@ def get_db():
     return conn
 
 def hash_pw(p):
-    # Add salt for better security
     salt = "better_properties_salt_2026"
     return hashlib.sha256((p + salt).encode()).hexdigest()
 
@@ -98,21 +93,16 @@ def init_db():
         sold_at     TEXT DEFAULT NULL,
         created_at  TEXT DEFAULT CURRENT_TIMESTAMP,
         area        TEXT DEFAULT '',
-        
-        -- Residential fields
         bedrooms    INTEGER DEFAULT 0,
         bathrooms   INTEGER DEFAULT 0,
         living_rooms INTEGER DEFAULT 0,
         kitchens    INTEGER DEFAULT 0,
         garages     INTEGER DEFAULT 0,
         sqft        INTEGER DEFAULT 0,
-        
-        -- Commercial fields
         offices      INTEGER DEFAULT 0,
         conference_rooms INTEGER DEFAULT 0,
         parking_spaces INTEGER DEFAULT 0,
         floor_number INTEGER DEFAULT 0,
-        
         featured    INTEGER DEFAULT 0
     )""")
     
@@ -149,7 +139,7 @@ def init_db():
     c.execute("INSERT OR IGNORE INTO agents (username, name, phone, email) VALUES (?,?,?,?)",
               ("employee1", "John Smith", "18687654321", "john@betterproperties.com"))
     
-    # Skip sample properties insertion to avoid column mismatch on Leapcell
+    # NO SAMPLE PROPERTIES - Database starts empty to avoid column mismatch
     # Properties will be added through admin panel
     print("Database initialized successfully (empty). Add properties via admin panel.")
     
@@ -157,15 +147,9 @@ def init_db():
     conn.close()
 
 def migrate_db():
-    """Add new columns if they don't exist"""
     conn = get_db()
     
-    # Add columns to users table
-    user_columns = [
-        "full_name TEXT DEFAULT ''",
-        "email TEXT DEFAULT ''",
-        "phone TEXT DEFAULT ''"
-    ]
+    user_columns = ["full_name TEXT DEFAULT ''", "email TEXT DEFAULT ''", "phone TEXT DEFAULT ''"]
     for col in user_columns:
         try:
             conn.execute(f"ALTER TABLE users ADD COLUMN {col}")
@@ -173,21 +157,13 @@ def migrate_db():
         except:
             pass
     
-    # Add columns to properties table
     prop_columns = [
-        "listing_type TEXT DEFAULT 'sale'",
-        "property_type TEXT DEFAULT 'residential'",
-        "bedrooms INTEGER DEFAULT 0",
-        "bathrooms INTEGER DEFAULT 0",
-        "living_rooms INTEGER DEFAULT 0",
-        "kitchens INTEGER DEFAULT 0",
-        "garages INTEGER DEFAULT 0",
-        "offices INTEGER DEFAULT 0",
-        "conference_rooms INTEGER DEFAULT 0",
-        "parking_spaces INTEGER DEFAULT 0",
-        "floor_number INTEGER DEFAULT 0",
-        "sqft INTEGER DEFAULT 0",
-        "agent_id TEXT DEFAULT ''"
+        "listing_type TEXT DEFAULT 'sale'", "property_type TEXT DEFAULT 'residential'",
+        "bedrooms INTEGER DEFAULT 0", "bathrooms INTEGER DEFAULT 0",
+        "living_rooms INTEGER DEFAULT 0", "kitchens INTEGER DEFAULT 0",
+        "garages INTEGER DEFAULT 0", "offices INTEGER DEFAULT 0",
+        "conference_rooms INTEGER DEFAULT 0", "parking_spaces INTEGER DEFAULT 0",
+        "floor_number INTEGER DEFAULT 0", "sqft INTEGER DEFAULT 0", "agent_id TEXT DEFAULT ''"
     ]
     for col in prop_columns:
         try:
@@ -198,7 +174,6 @@ def migrate_db():
     
     conn.close()
 
-# Initialize database
 init_db()
 migrate_db()
 
@@ -206,57 +181,51 @@ migrate_db()
 #  AUTO-DELETE SOLD PROPERTIES
 # ================================================================
 def auto_cleanup():
-    """Automatically delete sold properties after expiry days"""
     while True:
         try:
-            conn   = get_db()
+            conn = get_db()
             cutoff = (datetime.now() - timedelta(days=SOLD_EXPIRY_DAYS)).isoformat()
-            
-            # Mark new sold properties with timestamp if missing
             conn.execute("""UPDATE properties SET sold_at=?
                 WHERE status IN ('Sold', 'Rented', 'Leased') AND (sold_at IS NULL OR sold_at='')""",
                 (datetime.now().isoformat(),))
             
-            # Get expired properties to delete
             rows = conn.execute(
-                "SELECT id, title, sold_at FROM properties WHERE status IN ('Sold', 'Rented', 'Leased') AND sold_at<?", 
+                "SELECT id, title, sold_at FROM properties WHERE status IN ('Sold', 'Rented', 'Leased') AND sold_at<?",
                 (cutoff,)
             ).fetchall()
             
-            # Delete each expired property
             for r in rows:
                 conn.execute("DELETE FROM properties WHERE id=?", (r["id"],))
-                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Auto-deleted sold property: {r['title']}")
+                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Auto-deleted: {r['title']}")
             
             if rows:
                 conn.commit()
-                print(f"[Auto-cleanup] Deleted {len(rows)} expired property listings")
-            
+                print(f"[Auto-cleanup] Deleted {len(rows)} expired listings")
             conn.close()
         except Exception as e:
             print(f"[Auto-cleanup] Error: {e}")
-        
-        # Wait for specified hours before next check
         time.sleep(AUTO_CLEANUP_HOURS * 3600)
 
-# Start auto-cleanup thread
 cleanup_thread = threading.Thread(target=auto_cleanup, daemon=True)
 cleanup_thread.start()
-print(f"[System] Auto-cleanup thread started - will delete sold properties after {SOLD_EXPIRY_DAYS} days")
+print(f"[System] Auto-cleanup active - will delete after {SOLD_EXPIRY_DAYS} days")
 
 # ================================================================
 #  HELPERS
 # ================================================================
 def fmt_price(p):
-    try:    return "{:,}".format(int(p))
-    except: return str(p)
+    try:
+        return "{:,}".format(int(p))
+    except:
+        return str(p)
 
 def safe_int(v, d=0):
-    try:    return int(float(str(v).strip()))
-    except: return d
+    try:
+        return int(float(str(v).strip()))
+    except:
+        return d
 
 def allowed_file(filename):
-    """Check if file extension is allowed"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_areas():
@@ -272,10 +241,8 @@ def get_agents():
     return [dict(r) for r in rows]
 
 def get_property_images(images_data):
-    """Ensure property images are properly formatted"""
     if not images_data:
         return ["https://via.placeholder.com/400x300?text=No+Image"]
-    
     if isinstance(images_data, str):
         try:
             images = json.loads(images_data)
@@ -286,66 +253,51 @@ def get_property_images(images_data):
     else:
         return ["https://via.placeholder.com/400x300?text=No+Image"]
     
-    # Filter out empty strings and ensure all URLs are valid
-    valid_images = []
-    for img in images:
-        if img and img.strip():
-            valid_images.append(img.strip())
-    
+    valid_images = [img for img in images if img and img.strip()]
     if not valid_images:
         return ["https://via.placeholder.com/400x300?text=No+Image"]
-    
     return valid_images
 
 def record_view(title):
     today = datetime.now().strftime("%Y-%m-%d")
-    conn  = get_db()
+    conn = get_db()
     conn.execute("INSERT OR IGNORE INTO analytics(date) VALUES(?)", (today,))
     conn.execute("UPDATE analytics SET views=views+1 WHERE date=?", (today,))
     conn.execute("UPDATE properties SET views=views+1 WHERE title=?", (title,))
-    conn.commit(); conn.close()
+    conn.commit()
+    conn.close()
 
 def record_inquiry(title):
     today = datetime.now().strftime("%Y-%m-%d")
-    conn  = get_db()
+    conn = get_db()
     conn.execute("INSERT OR IGNORE INTO analytics(date) VALUES(?)", (today,))
     conn.execute("UPDATE analytics SET inquiries=inquiries+1 WHERE date=?", (today,))
     conn.execute("UPDATE properties SET inquiries=inquiries+1 WHERE title=?", (title,))
-    conn.commit(); conn.close()
+    conn.commit()
+    conn.close()
 
 def save_image(file, title, idx):
-    """Save uploaded image with validation"""
-    if not file or file.filename == "": 
+    if not file or file.filename == "":
         return ""
-    
-    # Validate file type
     if not allowed_file(file.filename):
-        print(f"Invalid file type: {file.filename}")
         return ""
-    
-    # Check file size
     file.seek(0, os.SEEK_END)
     file_size = file.tell()
     file.seek(0)
-    
     if file_size > MAX_FILE_SIZE:
-        print(f"File too large: {file_size} bytes (max {MAX_FILE_SIZE})")
         return ""
-    
-    safe  = re.sub(r'[^a-zA-Z0-9_-]', '_', title)
-    ext   = os.path.splitext(file.filename)[-1].lower() or ".jpg"
+    safe = re.sub(r'[^a-zA-Z0-9_-]', '_', title)
+    ext = os.path.splitext(file.filename)[-1].lower() or ".jpg"
     fname = f"{safe}_{idx}_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
-    path  = os.path.join(UPLOAD_DIR, fname)
+    path = os.path.join(UPLOAD_DIR, fname)
     file.save(path)
     return f"/static/uploads/{fname}"
 
 def get_expiry_stats():
-    """Get statistics about expiring sold properties"""
     conn = get_db()
     now = datetime.now()
     props = conn.execute("SELECT title, sold_at FROM properties WHERE status IN ('Sold', 'Rented', 'Leased') AND sold_at IS NOT NULL").fetchall()
     conn.close()
-    
     expiring_soon = []
     for p in props:
         try:
@@ -355,11 +307,9 @@ def get_expiry_stats():
                 expiring_soon.append({"title": p["title"], "days_left": days_left})
         except:
             pass
-    
     return expiring_soon
 
 def user_can_edit_property(username, role, property_agent_id):
-    """Check if user can edit/delete a property"""
     if role == "manager":
         return True
     return username == property_agent_id
@@ -369,17 +319,17 @@ def user_can_edit_property(username, role, property_agent_id):
 # ================================================================
 @app.route("/")
 def index():
-    conn   = get_db()
-    area   = request.args.get("area", "")
+    conn = get_db()
+    area = request.args.get("area", "")
     status = request.args.get("status", "")
     search = request.args.get("search", "")
     property_type = request.args.get("property_type", "")
     listing_type = request.args.get("listing_type", "")
-    min_p  = safe_int(request.args.get("min_price", 0))
-    max_p  = safe_int(request.args.get("max_price", 0))
-    sort   = request.args.get("sort", "newest")
+    min_p = safe_int(request.args.get("min_price", 0))
+    max_p = safe_int(request.args.get("max_price", 0))
+    sort = request.args.get("sort", "newest")
 
-    q      = "SELECT * FROM properties WHERE 1=1"
+    q = "SELECT * FROM properties WHERE 1=1"
     params = []
     if search:
         q += " AND (title LIKE ? OR description LIKE ?)"; params += [f"%{search}%", f"%{search}%"]
@@ -395,18 +345,20 @@ def index():
         q += " AND price>=?"; params.append(min_p)
     if max_p > 0:
         q += " AND price<=?"; params.append(max_p)
-    if sort == "price_asc":    q += " ORDER BY featured DESC, price ASC"
-    elif sort == "price_desc": q += " ORDER BY featured DESC, price DESC"
-    else:                      q += " ORDER BY featured DESC, id DESC"
+    
+    if sort == "price_asc":
+        q += " ORDER BY featured DESC, price ASC"
+    elif sort == "price_desc":
+        q += " ORDER BY featured DESC, price DESC"
+    else:
+        q += " ORDER BY featured DESC, id DESC"
 
-    rows   = conn.execute(q, params).fetchall()
-    props  = [dict(r) for r in rows]
+    rows = conn.execute(q, params).fetchall()
+    props = [dict(r) for r in rows]
     
     now = datetime.now()
     for p in props:
         p["images"] = get_property_images(p.get("images"))
-        
-        # Add days_left for sold properties
         if p.get("status") in ['Sold', 'Rented', 'Leased'] and p.get("sold_at"):
             try:
                 sold = datetime.fromisoformat(p["sold_at"])
@@ -420,19 +372,13 @@ def index():
             p["expiring_soon"] = False
 
     agents = get_agents()
-    areas  = get_areas()
+    areas = get_areas()
     conn.close()
 
     config_data = {
-        "name": BUSINESS_NAME,
-        "sub": BUSINESS_SUB,
-        "location": BUSINESS_LOCATION,
-        "email": BUSINESS_EMAIL,
-        "phone": BUSINESS_PHONE,
-        "whatsapp": WHATSAPP_NUMBER,
-        "expiry_days": SOLD_EXPIRY_DAYS,
-        "facebook": FACEBOOK_URL,
-        "instagram": INSTAGRAM_URL
+        "name": BUSINESS_NAME, "sub": BUSINESS_SUB, "location": BUSINESS_LOCATION,
+        "email": BUSINESS_EMAIL, "phone": BUSINESS_PHONE, "whatsapp": WHATSAPP_NUMBER,
+        "expiry_days": SOLD_EXPIRY_DAYS, "facebook": FACEBOOK_URL, "instagram": INSTAGRAM_URL
     }
 
     return render_template("index.html",
@@ -440,9 +386,7 @@ def index():
         search=search, selected_area=area, selected_status=status,
         selected_property_type=property_type, selected_listing_type=listing_type,
         min_price=min_p, max_price=max_p, sort=sort,
-        config=config_data,
-        fmt_price=fmt_price
-    )
+        config=config_data, fmt_price=fmt_price)
 
 @app.route("/track/view/<path:title>")
 def track_view(title):
@@ -461,8 +405,9 @@ def submit_viewing():
     conn.execute("""INSERT INTO viewing_requests(property,name,email,phone,requested_dt)
         VALUES(?,?,?,?,?)""", (data.get("property"), data.get("name"),
         data.get("email"), data.get("phone"), data.get("datetime")))
-    conn.commit(); conn.close()
-    record_inquiry(data.get("property",""))
+    conn.commit()
+    conn.close()
+    record_inquiry(data.get("property", ""))
     return jsonify({"ok": True})
 
 # ================================================================
@@ -487,17 +432,17 @@ def mgr_required(f):
         return f(*args, **kwargs)
     return decorated
 
-@app.route("/admin/login", methods=["GET","POST"])
+@app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
-        u = request.form.get("username","")
-        p = request.form.get("password","")
+        u = request.form.get("username", "")
+        p = request.form.get("password", "")
         conn = get_db()
-        row  = conn.execute("SELECT * FROM users WHERE username=?", (u,)).fetchone()
+        row = conn.execute("SELECT * FROM users WHERE username=?", (u,)).fetchone()
         conn.close()
         if row and row["password"] == hash_pw(p):
             session["username"] = u
-            session["role"]     = row["role"]
+            session["role"] = row["role"]
             try:
                 full_name = row["full_name"] if row["full_name"] else u
             except:
@@ -521,7 +466,6 @@ def admin_dashboard():
     username = session["username"]
     role = session["role"]
     
-    # Filter properties based on role
     if role == "manager":
         props = [dict(r) for r in conn.execute("SELECT * FROM properties ORDER BY id DESC").fetchall()]
     else:
@@ -538,7 +482,6 @@ def admin_dashboard():
     tv = conn.execute("SELECT SUM(views) FROM properties").fetchone()[0] or 0
     ti = conn.execute("SELECT SUM(inquiries) FROM properties").fetchone()[0] or 0
     
-    # Status counts (filtered for agents)
     if role == "manager":
         sc = [dict(r) for r in conn.execute("SELECT status, COUNT(*) as c FROM properties GROUP BY status").fetchall()]
     else:
@@ -568,16 +511,10 @@ def admin_dashboard():
         total_props=len(props), total_requests=len(requests),
         areas=get_areas(), agent_names=[a["name"] for a in agents],
         config={"name": BUSINESS_NAME, "sub": BUSINESS_SUB,
-                "expiry_days": SOLD_EXPIRY_DAYS,
-                "cleanup_hours": AUTO_CLEANUP_HOURS,
-                "facebook": FACEBOOK_URL,
-                "instagram": INSTAGRAM_URL},
-        expiring_count=expiring_count,
-        expiring_props=expiring_props,
-        fmt_price=fmt_price, session=session,
-        max_photos=MAX_PHOTOS,
-        role=role
-    )
+                "expiry_days": SOLD_EXPIRY_DAYS, "cleanup_hours": AUTO_CLEANUP_HOURS,
+                "facebook": FACEBOOK_URL, "instagram": INSTAGRAM_URL},
+        expiring_count=expiring_count, expiring_props=expiring_props,
+        fmt_price=fmt_price, session=session, max_photos=MAX_PHOTOS, role=role)
 
 # ── Properties ──────────────────────────────────────────────────
 @app.route("/admin/property/add", methods=["POST"])
@@ -588,7 +525,6 @@ def admin_add_property():
     listing_type = f.get("listing_type", "sale")
     username = session["username"]
     
-    # Handle dynamic photos (up to MAX_PHOTOS)
     imgs = []
     for i in range(1, MAX_PHOTOS + 1):
         file = request.files.get(f"img{i}_file")
@@ -601,38 +537,24 @@ def admin_add_property():
     
     sold_at = datetime.now().isoformat() if f.get("status") in ['Sold', 'Rented', 'Leased'] else None
     
-    # Get agent name
     conn = get_db()
     agent_row = conn.execute("SELECT full_name FROM users WHERE username=?", (username,)).fetchone()
     agent_name = agent_row["full_name"] if agent_row and agent_row["full_name"] else username
     
-    # Common fields
     base_fields = {
-        "title": f.get("title", "").strip(),
-        "price": safe_int(f.get("price", 0)),
-        "listing_type": listing_type,
-        "property_type": property_type,
-        "status": f.get("status", "Available"),
-        "description": f.get("description", "").strip(),
-        "map_url": f.get("map_url", "").strip(),
-        "images": json.dumps(imgs),
-        "featured": 1 if f.get("featured") else 0,
-        "agent": agent_name,
-        "agent_id": username,
-        "sold_at": sold_at,
-        "area": f.get("area", "").strip(),
-        "badge": f.get("badge", "").strip()
+        "title": f.get("title", "").strip(), "price": safe_int(f.get("price", 0)),
+        "listing_type": listing_type, "property_type": property_type,
+        "status": f.get("status", "Available"), "description": f.get("description", "").strip(),
+        "map_url": f.get("map_url", "").strip(), "images": json.dumps(imgs),
+        "featured": 1 if f.get("featured") else 0, "agent": agent_name, "agent_id": username,
+        "sold_at": sold_at, "area": f.get("area", "").strip(), "badge": f.get("badge", "").strip()
     }
     
-    # Residential fields
     if property_type == "residential":
         base_fields.update({
-            "bedrooms": safe_int(f.get("bedrooms", 0)),
-            "bathrooms": safe_int(f.get("bathrooms", 0)),
-            "living_rooms": safe_int(f.get("living_rooms", 0)),
-            "kitchens": safe_int(f.get("kitchens", 0)),
-            "garages": safe_int(f.get("garages", 0)),
-            "sqft": safe_int(f.get("sqft", 0))
+            "bedrooms": safe_int(f.get("bedrooms", 0)), "bathrooms": safe_int(f.get("bathrooms", 0)),
+            "living_rooms": safe_int(f.get("living_rooms", 0)), "kitchens": safe_int(f.get("kitchens", 0)),
+            "garages": safe_int(f.get("garages", 0)), "sqft": safe_int(f.get("sqft", 0))
         })
         conn.execute("""INSERT INTO properties
             (title, price, listing_type, property_type, status, description, map_url, images,
@@ -645,16 +567,12 @@ def admin_add_property():
             base_fields["agent"], base_fields["agent_id"], base_fields["sold_at"], 
             base_fields["area"], base_fields["badge"], base_fields["bedrooms"], 
             base_fields["bathrooms"], base_fields["living_rooms"], base_fields["kitchens"], 
-            base_fields["garages"], base_fields["sqft"]
-        ))
+            base_fields["garages"], base_fields["sqft"]))
     else:
         base_fields.update({
-            "offices": safe_int(f.get("offices", 0)),
-            "conference_rooms": safe_int(f.get("conference_rooms", 0)),
-            "bathrooms": safe_int(f.get("bathrooms", 0)),
-            "kitchens": safe_int(f.get("kitchens", 0)),
-            "parking_spaces": safe_int(f.get("parking_spaces", 0)),
-            "sqft": safe_int(f.get("sqft", 0)),
+            "offices": safe_int(f.get("offices", 0)), "conference_rooms": safe_int(f.get("conference_rooms", 0)),
+            "bathrooms": safe_int(f.get("bathrooms", 0)), "kitchens": safe_int(f.get("kitchens", 0)),
+            "parking_spaces": safe_int(f.get("parking_spaces", 0)), "sqft": safe_int(f.get("sqft", 0)),
             "floor_number": safe_int(f.get("floor_number", 0))
         })
         conn.execute("""INSERT INTO properties
@@ -668,8 +586,7 @@ def admin_add_property():
             base_fields["agent"], base_fields["agent_id"], base_fields["sold_at"], 
             base_fields["area"], base_fields["badge"], base_fields["offices"], 
             base_fields["conference_rooms"], base_fields["bathrooms"], base_fields["kitchens"], 
-            base_fields["parking_spaces"], base_fields["sqft"], base_fields["floor_number"]
-        ))
+            base_fields["parking_spaces"], base_fields["sqft"], base_fields["floor_number"]))
     
     conn.commit()
     conn.close()
@@ -687,7 +604,6 @@ def admin_edit_property(pid):
         flash("❌ Property not found")
         return redirect(url_for("admin_dashboard"))
     
-    # Check permissions
     if not user_can_edit_property(session["username"], session["role"], old["agent_id"]):
         flash("❌ You don't have permission to edit this property")
         conn.close()
@@ -697,7 +613,6 @@ def admin_edit_property(pid):
     listing_type = f.get("listing_type", old["listing_type"])
     old_imgs = json.loads(old["images"]) if isinstance(old["images"], str) else (old["images"] or [])
     
-    # Handle dynamic photos
     imgs = []
     for i in range(1, MAX_PHOTOS + 1):
         file = request.files.get(f"img{i}_file")
@@ -713,71 +628,52 @@ def admin_edit_property(pid):
     status = f.get("status", "Available")
     sold_at = old["sold_at"] if status in ['Sold', 'Rented', 'Leased'] and old["sold_at"] else (datetime.now().isoformat() if status in ['Sold', 'Rented', 'Leased'] else None)
     
-    # Common fields
     base_fields = {
-        "title": f.get("title", "").strip(),
-        "price": safe_int(f.get("price", 0)),
-        "listing_type": listing_type,
-        "property_type": property_type,
-        "status": status,
-        "description": f.get("description", "").strip(),
-        "map_url": f.get("map_url", "").strip(),
-        "images": json.dumps(imgs),
-        "featured": 1 if f.get("featured") else 0,
-        "agent": old["agent"],
-        "agent_id": old["agent_id"],
-        "sold_at": sold_at,
-        "area": f.get("area", "").strip(),
-        "badge": f.get("badge", "").strip()
+        "title": f.get("title", "").strip(), "price": safe_int(f.get("price", 0)),
+        "listing_type": listing_type, "property_type": property_type, "status": status,
+        "description": f.get("description", "").strip(), "map_url": f.get("map_url", "").strip(),
+        "images": json.dumps(imgs), "featured": 1 if f.get("featured") else 0,
+        "agent": old["agent"], "agent_id": old["agent_id"], "sold_at": sold_at,
+        "area": f.get("area", "").strip(), "badge": f.get("badge", "").strip()
     }
     
     if property_type == "residential":
         base_fields.update({
-            "bedrooms": safe_int(f.get("bedrooms", 0)),
-            "bathrooms": safe_int(f.get("bathrooms", 0)),
-            "living_rooms": safe_int(f.get("living_rooms", 0)),
-            "kitchens": safe_int(f.get("kitchens", 0)),
-            "garages": safe_int(f.get("garages", 0)),
-            "sqft": safe_int(f.get("sqft", 0))
+            "bedrooms": safe_int(f.get("bedrooms", 0)), "bathrooms": safe_int(f.get("bathrooms", 0)),
+            "living_rooms": safe_int(f.get("living_rooms", 0)), "kitchens": safe_int(f.get("kitchens", 0)),
+            "garages": safe_int(f.get("garages", 0)), "sqft": safe_int(f.get("sqft", 0))
         })
         conn.execute("""UPDATE properties SET
             title=?, price=?, listing_type=?, property_type=?, status=?,
             description=?, map_url=?, images=?, featured=?, agent=?, agent_id=?, sold_at=?,
             area=?, badge=?, bedrooms=?, bathrooms=?, living_rooms=?, kitchens=?,
-            garages=?, sqft=?
-            WHERE id=?""", (
+            garages=?, sqft=? WHERE id=?""", (
             base_fields["title"], base_fields["price"], base_fields["listing_type"],
             base_fields["property_type"], base_fields["status"], base_fields["description"],
             base_fields["map_url"], base_fields["images"], base_fields["featured"],
             base_fields["agent"], base_fields["agent_id"], base_fields["sold_at"],
             base_fields["area"], base_fields["badge"], base_fields["bedrooms"], 
             base_fields["bathrooms"], base_fields["living_rooms"], base_fields["kitchens"], 
-            base_fields["garages"], base_fields["sqft"], pid
-        ))
+            base_fields["garages"], base_fields["sqft"], pid))
     else:
         base_fields.update({
-            "offices": safe_int(f.get("offices", 0)),
-            "conference_rooms": safe_int(f.get("conference_rooms", 0)),
-            "bathrooms": safe_int(f.get("bathrooms", 0)),
-            "kitchens": safe_int(f.get("kitchens", 0)),
-            "parking_spaces": safe_int(f.get("parking_spaces", 0)),
-            "sqft": safe_int(f.get("sqft", 0)),
+            "offices": safe_int(f.get("offices", 0)), "conference_rooms": safe_int(f.get("conference_rooms", 0)),
+            "bathrooms": safe_int(f.get("bathrooms", 0)), "kitchens": safe_int(f.get("kitchens", 0)),
+            "parking_spaces": safe_int(f.get("parking_spaces", 0)), "sqft": safe_int(f.get("sqft", 0)),
             "floor_number": safe_int(f.get("floor_number", 0))
         })
         conn.execute("""UPDATE properties SET
             title=?, price=?, listing_type=?, property_type=?, status=?,
             description=?, map_url=?, images=?, featured=?, agent=?, agent_id=?, sold_at=?,
             area=?, badge=?, offices=?, conference_rooms=?, bathrooms=?,
-            kitchens=?, parking_spaces=?, sqft=?, floor_number=?
-            WHERE id=?""", (
+            kitchens=?, parking_spaces=?, sqft=?, floor_number=? WHERE id=?""", (
             base_fields["title"], base_fields["price"], base_fields["listing_type"],
             base_fields["property_type"], base_fields["status"], base_fields["description"],
             base_fields["map_url"], base_fields["images"], base_fields["featured"],
             base_fields["agent"], base_fields["agent_id"], base_fields["sold_at"],
             base_fields["area"], base_fields["badge"], base_fields["offices"], 
             base_fields["conference_rooms"], base_fields["bathrooms"], base_fields["kitchens"], 
-            base_fields["parking_spaces"], base_fields["sqft"], base_fields["floor_number"], pid
-        ))
+            base_fields["parking_spaces"], base_fields["sqft"], base_fields["floor_number"], pid))
     
     conn.commit()
     conn.close()
@@ -794,7 +690,6 @@ def admin_delete_property(pid):
         flash("❌ Property not found")
         return redirect(url_for("admin_dashboard"))
     
-    # Check permissions
     if not user_can_edit_property(session["username"], session["role"], row["agent_id"]):
         flash("❌ You don't have permission to delete this property")
         conn.close()
@@ -843,7 +738,6 @@ def admin_add_user():
             (f.get("username", "").strip(), hash_pw(f.get("password", "")), 
              f.get("role", "employee"), f.get("full_name", "").strip(),
              f.get("email", "").strip(), f.get("phone", "").strip()))
-        # Also add to agents table
         if f.get("role") == "employee":
             conn.execute("INSERT OR IGNORE INTO agents(username,name,phone,email) VALUES(?,?,?,?)",
                 (f.get("username", "").strip(), f.get("full_name", "").strip(),
@@ -896,7 +790,6 @@ def get_property_json(pid):
 
 @app.route("/api/property/<int:pid>")
 def get_public_property_json(pid):
-    """Public endpoint for property details - no authentication required"""
     conn = get_db()
     row = conn.execute("SELECT * FROM properties WHERE id=?", (pid,)).fetchone()
     conn.close()
@@ -920,7 +813,6 @@ if __name__ == "__main__":
     ║  • Dynamic photo upload (up to {MAX_PHOTOS} photos)             ║
     ║  • Residential & Commercial property types              ║
     ║  • Role-based access (Manager/Agent)                    ║
-    ║  • Agents can only manage their own listings            ║
     ║  • File upload validation (max 5MB)                     ║
     ║  • Social Media Links (Facebook & Instagram)            ║
     ║  • Public API for property details                      ║
