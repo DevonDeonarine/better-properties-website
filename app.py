@@ -8,7 +8,7 @@ Admin: http://127.0.0.1:5000/admin
 Login: manager / admin123
 """
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash, send_from_directory
 from datetime import datetime, timedelta
 import sqlite3, hashlib, json, os, shutil, re, threading, time, secrets, tempfile
 
@@ -318,8 +318,6 @@ def save_image(file, title, idx):
     fname = f"{safe}_{idx}_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
     path = os.path.join(UPLOAD_DIR, fname)
     file.save(path)
-    # Return URL path for browser access - note: this won't work directly on Leapcell
-    # You'll need to serve static files from /tmp/uploads or use external hosting
     return f"/uploads/{fname}"
 
 def get_expiry_stats():
@@ -945,9 +943,6 @@ def get_public_property_json(pid):
     return jsonify(d)
 
 if __name__ == "__main__":
-    # Add send_from_directory import
-    from flask import send_from_directory
-    
     print(f"""
     ╔══════════════════════════════════════════════════════════╗
     ║     Better Properties - Real Estate Management System    ║
@@ -967,6 +962,7 @@ if __name__ == "__main__":
     ║  • CSRF Protection Enabled                              ║
     ║  • Password Change Routes Fixed (No more 404!)          ║
     ║  • Upload directory: /tmp/uploads (Leapcell compatible) ║
+    ║  • Images will be served correctly                      ║
     ╚══════════════════════════════════════════════════════════╝
     """)
     app.run(debug=True, port=5000)
