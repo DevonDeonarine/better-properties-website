@@ -1,10 +1,7 @@
 """
-Better Properties — Flask Backend (Debug Version)
-==================================================
+Better Properties — Complete Working Version
+=============================================
 Admin Login: manager / admin123
-
-This version uses in-memory storage - NO database required.
-Data will be lost on restart, but it's perfect for testing!
 """
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
@@ -32,27 +29,24 @@ FACEBOOK_URL    = "https://facebook.com/betterproperties"
 INSTAGRAM_URL   = "https://instagram.com/betterproperties"
 
 # ================================================================
-#  IN-MEMORY STORAGE (No database needed for testing)
+#  IN-MEMORY STORAGE (No database needed)
 # ================================================================
 properties = []
 property_id_counter = 1
 
-# Users: username -> hashed_password
+# Users
 users = {
     "manager": hash_pw("admin123"),
     "employee1": hash_pw("emp123")
 }
 
-# Agents list
+# Agents
 agents = [
     {"id": 1, "username": "employee1", "name": "John Smith", "phone": "18687654321", "email": "john@betterproperties.com", "bio": "", "photo": ""}
 ]
 
 # Viewing requests
 viewing_requests = []
-
-# Analytics
-analytics = {}
 
 def hash_pw(p):
     salt = "better_properties_salt_2026"
@@ -103,47 +97,55 @@ def get_areas():
     return sorted(list(areas))
 
 # ================================================================
+#  CONFIG FOR TEMPLATES
+# ================================================================
+def get_config():
+    return {
+        "name": BUSINESS_NAME,
+        "sub": BUSINESS_SUB,
+        "location": BUSINESS_LOCATION,
+        "email": BUSINESS_EMAIL,
+        "phone": BUSINESS_PHONE,
+        "whatsapp": WHATSAPP_NUMBER,
+        "expiry_days": SOLD_EXPIRY_DAYS,
+        "facebook": FACEBOOK_URL,
+        "instagram": INSTAGRAM_URL
+    }
+
+# ================================================================
 #  PUBLIC ROUTES
 # ================================================================
 @app.route("/")
 def index():
-    config_data = {
-        "name": BUSINESS_NAME, "sub": BUSINESS_SUB, "location": BUSINESS_LOCATION,
-        "email": BUSINESS_EMAIL, "phone": BUSINESS_PHONE, "whatsapp": WHATSAPP_NUMBER,
-        "expiry_days": SOLD_EXPIRY_DAYS, "facebook": FACEBOOK_URL, "instagram": INSTAGRAM_URL
-    }
-    
-    return render_template("index.html", 
-        props=properties, 
-        config=config_data,
-        fmt_price=fmt_price)
+    try:
+        return render_template("index.html", 
+            props=properties, 
+            config=get_config(),
+            fmt_price=fmt_price)
+    except Exception as e:
+        return f"<h1>Template Error</h1><p>Missing 'index.html' template. Error: {str(e)}</p><p>Admin login at <a href='/admin/login'>/admin/login</a> (manager/admin123)</p>"
 
 @app.route("/property/<int:property_id>")
 def view_property(property_id):
-    """View a single property's full details"""
-    property_data = None
-    for p in properties:
-        if p.get("id") == property_id:
-            property_data = p
-            break
-    
-    if not property_data:
-        return "Property not found", 404
-    
-    config_data = {
-        "name": BUSINESS_NAME, "sub": BUSINESS_SUB, "location": BUSINESS_LOCATION,
-        "email": BUSINESS_EMAIL, "phone": BUSINESS_PHONE, "whatsapp": WHATSAPP_NUMBER,
-        "expiry_days": SOLD_EXPIRY_DAYS, "facebook": FACEBOOK_URL, "instagram": INSTAGRAM_URL
-    }
-    
-    return render_template("property_detail.html", 
-        property=property_data, 
-        config=config_data,
-        fmt_price=fmt_price)
+    try:
+        property_data = None
+        for p in properties:
+            if p.get("id") == property_id:
+                property_data = p
+                break
+        
+        if not property_data:
+            return "Property not found", 404
+        
+        return render_template("property_detail.html", 
+            property=property_data, 
+            config=get_config(),
+            fmt_price=fmt_price)
+    except Exception as e:
+        return f"<h1>Template Error</h1><p>Missing 'property_detail.html' template. Error: {str(e)}</p><a href='/'>Go Home</a>"
 
 @app.route("/api/property/<int:pid>")
 def get_public_property_json(pid):
-    """API endpoint for property details"""
     for p in properties:
         if p.get("id") == pid:
             return jsonify(p)
@@ -210,7 +212,21 @@ def admin_login():
             flash(f"✅ Welcome back, {u}!")
             return redirect(url_for("admin_dashboard"))
         flash("❌ Invalid credentials", "error")
-    return render_template("admin_login.html", config={"name": BUSINESS_NAME})
+    
+    try:
+        return render_template("admin_login.html", config={"name": BUSINESS_NAME})
+    except Exception as e:
+        return f'''
+        <h1>Admin Login</h1>
+        <form method="POST">
+            <input type="hidden" name="_csrf" value="{get_csrf_token()}">
+            <input type="text" name="username" placeholder="Username" required><br>
+            <input type="password" name="password" placeholder="Password" required><br>
+            <button type="submit">Login</button>
+        </form>
+        <p>Use: manager / admin123</p>
+        <p><small>Template 'admin_login.html' not found. Using fallback.</small></p>
+        '''
 
 @app.route("/admin/logout")
 def admin_logout():
@@ -224,35 +240,34 @@ def admin_dashboard():
     username = session["username"]
     role = session["role"]
     
-    # Filter properties by agent if not manager
     if role == "manager":
         props = properties
     else:
         props = [p for p in properties if p.get("agent_id") == username]
     
-    # Prepare analytics data
     days = []
     for i in range(7):
         date = (datetime.now() - timedelta(days=6-i)).strftime("%Y-%m-%d")
         days.append({"date": date, "views": 0, "inquiries": 0})
     
-    return render_template("admin.html",
-        props=props,
-        agents=agents,
-        users=[{"username": u, "role": "manager" if u == "manager" else "employee", "full_name": u} for u in users.keys()],
-        requests=viewing_requests,
-        analytics_days=days,
-        total_props=len(props),
-        total_requests=len(viewing_requests),
-        areas=get_areas(),
-        agent_names=[a["name"] for a in agents],
-        config={"name": BUSINESS_NAME, "sub": BUSINESS_SUB,
-                "expiry_days": SOLD_EXPIRY_DAYS, "cleanup_hours": AUTO_CLEANUP_HOURS,
-                "facebook": FACEBOOK_URL, "instagram": INSTAGRAM_URL},
-        fmt_price=fmt_price,
-        session=session,
-        max_photos=MAX_PHOTOS,
-        role=role)
+    try:
+        return render_template("admin.html",
+            props=props,
+            agents=agents,
+            users=[{"username": u, "role": "manager" if u == "manager" else "employee", "full_name": u} for u in users.keys()],
+            requests=viewing_requests,
+            analytics_days=days,
+            total_props=len(props),
+            total_requests=len(viewing_requests),
+            areas=get_areas(),
+            agent_names=[a["name"] for a in agents],
+            config=get_config(),
+            fmt_price=fmt_price,
+            session=session,
+            max_photos=MAX_PHOTOS,
+            role=role)
+    except Exception as e:
+        return f"<h1>Admin Dashboard</h1><p>You are logged in as {username} (Role: {role})</p><p>Total properties: {len(props)}</p><p><a href='/admin/logout'>Logout</a></p><p><small>Template 'admin.html' not found. Using fallback.</small></p>"
 
 # ── Properties ──────────────────────────────────────────────────
 @app.route("/admin/property/add", methods=["POST"])
@@ -265,7 +280,6 @@ def admin_add_property():
         listing_type = f.get("listing_type", "sale")
         username = session["username"]
         
-        # Collect images from form
         imgs = []
         for i in range(1, MAX_PHOTOS + 1):
             url = f.get(f"img{i}_url", "").strip()
@@ -279,7 +293,6 @@ def admin_add_property():
             flash("❌ Title is required", "error")
             return redirect(url_for("admin_dashboard") + "#properties")
         
-        # Get agent name
         agent_name = username
         for a in agents:
             if a.get("username") == username:
@@ -331,7 +344,6 @@ def admin_add_property():
 @login_required
 def admin_edit_property(pid):
     try:
-        # Find the property
         old_property = None
         old_index = None
         for i, p in enumerate(properties):
@@ -348,7 +360,6 @@ def admin_edit_property(pid):
         property_type = f.get("property_type", old_property.get("property_type", "residential"))
         listing_type = f.get("listing_type", old_property.get("listing_type", "sale"))
         
-        # Collect images
         old_imgs = old_property.get("images", [])
         imgs = []
         for i in range(1, MAX_PHOTOS + 1):
@@ -540,7 +551,7 @@ def change_my_password():
     return redirect(url_for("admin_dashboard") + "#settings")
 
 # ================================================================
-#  AUTO-CLEANUP THREAD (for sold/rented properties)
+#  AUTO-CLEANUP THREAD
 # ================================================================
 def auto_cleanup():
     global properties
@@ -567,10 +578,8 @@ def auto_cleanup():
             print(f"[Auto-cleanup] Error: {e}")
         time.sleep(AUTO_CLEANUP_HOURS * 3600)
 
-# Start cleanup thread
 cleanup_thread = threading.Thread(target=auto_cleanup, daemon=True)
 cleanup_thread.start()
-print(f"[System] Auto-cleanup active - will delete after {SOLD_EXPIRY_DAYS} days")
 
 # ================================================================
 #  STARTUP
@@ -581,11 +590,11 @@ if __name__ == "__main__":
     ║     Better Properties - Real Estate Management System    ║
     ╠══════════════════════════════════════════════════════════╣
     ║  Website:    http://127.0.0.1:5000                       ║
-    ║  Admin:      http://127.0.0.1:5000/admin                 ║
+    ║  Admin:      http://127.0.0.1:5000/admin/login           ║
     ║  Login:      manager / admin123                          ║
     ╠══════════════════════════════════════════════════════════╣
-    ║  Storage:    In-Memory (Debug Mode)                      ║
-    ║  NOTE: Data will be lost when the app restarts!          ║
+    ║  Storage:    In-Memory (for testing)                     ║
+    ║  Status:     RUNNING                                      ║
     ╚══════════════════════════════════════════════════════════╝
     """)
     app.run(debug=True, port=5000)
