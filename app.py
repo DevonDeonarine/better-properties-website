@@ -754,6 +754,28 @@ def admin_delete_agent(aid):
     flash("✅ Agent removed.")
     return redirect(url_for("admin_dashboard") + "#agents")
 
+@app.route("/admin/agent/edit/<int:aid>", methods=["POST"])
+@mgr_required
+def admin_edit_agent(aid):
+    f = request.form
+    file = request.files.get("photo_file")
+    photo = save_image(file, f.get("name", "agent"), 0) or f.get("photo_url", "").strip()
+    
+    conn = get_db()
+    # Get current photo if no new photo provided
+    if not photo:
+        current = conn.execute("SELECT photo FROM agents WHERE id=?", (aid,)).fetchone()
+        if current and current["photo"]:
+            photo = current["photo"]
+    
+    conn.execute("UPDATE agents SET name=?, phone=?, email=?, bio=?, photo=? WHERE id=?",
+        (f.get("name", "").strip(), f.get("phone", "").strip(),
+         f.get("email", "").strip(), f.get("bio", "").strip(), photo, aid))
+    conn.commit()
+    conn.close()
+    flash(f"✅ Agent '{f.get('name')}' updated.")
+    return redirect(url_for("admin_dashboard") + "#agents")
+
 # ── Users (Manager only) ────────────────────────────────────────
 @app.route("/admin/user/add", methods=["POST"])
 @mgr_required
@@ -790,7 +812,9 @@ def admin_delete_user(username):
     flash(f"✅ User '{username}' removed.")
     return redirect(url_for("admin_dashboard") + "#users")
 
-# ── Change Password (Manager only) - FIXED 404 ERROR ────────────────────
+# ── Change Password Routes - FIXED 404 ERRORS ─────────────────────
+
+# Route 1: Manager changes ANY user's password (used by password modal)
 @app.route("/admin/user/password", methods=["POST"])
 @mgr_required
 def admin_change_password():
@@ -814,26 +838,39 @@ def admin_change_password():
     flash(f"✅ Password updated for '{username}'!", "success")
     return redirect(url_for("admin_dashboard") + "#users")
 
-# ── Change own password (for any logged in user) ─────────────────────
-@app.route("/admin/change-password", methods=["POST"])
+# Route 2: User changes THEIR OWN password (used by My Password tab)
+@app.route("/admin/user/change_my_password", methods=["POST"])
 @login_required
-def change_own_password():
-    f = request.form
+def change_my_password():
     username = session["username"]
-    old = f.get("current_password", "")
-    new = f.get("new_password", "")
+    current = request.form.get("current_password", "")
+    new_password = request.form.get("new_password", "")
+    confirm = request.form.get("confirm_password", "")
+    
+    # Validate CSRF
+    if not validate_csrf():
+        flash("❌ Invalid security token. Please try again.", "error")
+        return redirect(url_for("admin_dashboard") + "#settings")
+    
+    # Check passwords match
+    if new_password != confirm:
+        flash("❌ New passwords do not match", "error")
+        return redirect(url_for("admin_dashboard") + "#settings")
+    
+    # Check minimum length
+    if len(new_password) < 8:
+        flash("❌ Password must be at least 8 characters", "error")
+        return redirect(url_for("admin_dashboard") + "#settings")
     
     conn = get_db()
     row = conn.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
     
-    if not row or row["password"] != hash_pw(old):
+    if not row or row["password"] != hash_pw(current):
         flash("❌ Current password is incorrect", "error")
-    elif len(new) < 4:
-        flash("❌ New password must be at least 4 characters", "error")
     else:
-        conn.execute("UPDATE users SET password=? WHERE username=?", (hash_pw(new), username))
+        conn.execute("UPDATE users SET password=? WHERE username=?", (hash_pw(new_password), username))
         conn.commit()
-        flash(f"✅ Password updated for '{username}'!", "success")
+        flash(f"✅ Your password has been updated successfully!", "success")
     
     conn.close()
     return redirect(url_for("admin_dashboard") + "#settings")
