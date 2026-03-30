@@ -52,19 +52,20 @@ SOLD_EXPIRY_DAYS  = 7
 AUTO_CLEANUP_HOURS = 1
 MAX_PHOTOS = 21
 
-# Database path - MUST use /tmp on Leapcell (only writable directory)
-if os.path.exists('/tmp') or os.name == 'posix':
-    DB_PATH = '/tmp/better_properties.db'
-else:
-    DB_PATH = os.path.join(os.path.dirname(__file__), "better_properties.db")
+# ================================================================
+#  PERSISTENT STORAGE - FIXED FOR LEAPCELL
+#  Data will NOT be deleted on redeploys!
+# ================================================================
+# Create /data directory if it doesn't exist (Leapcell persistent volume)
+DATA_DIR = '/data'
+os.makedirs(DATA_DIR, exist_ok=True)
 
+# Database path - Use persistent /data directory
+DB_PATH = os.path.join(DATA_DIR, 'better_properties.db')
 print(f"Database path: {DB_PATH}")
 
-# ================================================================
-#  UPLOAD DIRECTORY - FIXED FOR LEAPCELL (using /tmp)
-# ================================================================
-# Leapcell only allows writing to /tmp directory
-UPLOAD_DIR = '/tmp/uploads'
+# Upload directory - Use persistent /data/uploads
+UPLOAD_DIR = os.path.join(DATA_DIR, 'uploads')
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 print(f"Upload directory: {UPLOAD_DIR}")
 
@@ -154,23 +155,26 @@ def init_db():
         email TEXT DEFAULT '', photo TEXT DEFAULT '', bio TEXT DEFAULT ''
     )""")
     
-    # Create admin user
-    admin_password = hash_pw("admin123")
-    c.execute("INSERT OR IGNORE INTO users (username, password, role, full_name, email, phone) VALUES (?,?,?,?,?,?)", 
-              ("manager", admin_password, "manager", "System Administrator", "admin@betterproperties.com", "18681234567"))
-    
-    # Create sample agent
-    agent_password = hash_pw("emp123")
-    c.execute("INSERT OR IGNORE INTO users (username, password, role, full_name, email, phone) VALUES (?,?,?,?,?,?)", 
-              ("employee1", agent_password, "employee", "John Smith", "john@betterproperties.com", "18687654321"))
-    c.execute("INSERT OR IGNORE INTO agents (username, name, phone, email) VALUES (?,?,?,?)",
-              ("employee1", "John Smith", "18687654321", "john@betterproperties.com"))
-    
-    # NO SAMPLE PROPERTIES - Database starts empty to avoid column mismatch
-    # Properties will be added through admin panel
-    print("Database initialized successfully (empty). Add properties via admin panel.")
+    # Check if admin user exists before inserting
+    existing = c.execute("SELECT username FROM users WHERE username='manager'").fetchone()
+    if not existing:
+        admin_password = hash_pw("admin123")
+        c.execute("INSERT INTO users (username, password, role, full_name, email, phone) VALUES (?,?,?,?,?,?)", 
+                  ("manager", admin_password, "manager", "System Administrator", "admin@betterproperties.com", "18681234567"))
+        
+        # Create sample agent only if database is new
+        agent_password = hash_pw("emp123")
+        c.execute("INSERT OR IGNORE INTO users (username, password, role, full_name, email, phone) VALUES (?,?,?,?,?,?)", 
+                  ("employee1", agent_password, "employee", "John Smith", "john@betterproperties.com", "18687654321"))
+        c.execute("INSERT OR IGNORE INTO agents (username, name, phone, email) VALUES (?,?,?,?)",
+                  ("employee1", "John Smith", "18687654321", "john@betterproperties.com"))
     
     conn.commit()
+    
+    # Count existing properties
+    count = c.execute("SELECT COUNT(*) FROM properties").fetchone()[0]
+    print(f"Database initialized. Existing properties: {count}")
+    
     conn.close()
 
 def migrate_db():
@@ -913,12 +917,12 @@ def change_my_password():
     conn.close()
     return redirect(url_for("admin_dashboard") + "#settings")
 
-# ── Serve uploaded files from /tmp/uploads ────────────────────────
+# ── Serve uploaded files from /data/uploads ────────────────────────
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    """Serve uploaded files from /tmp/uploads directory"""
+    """Serve uploaded files from /data/uploads directory"""
     try:
-        return send_from_directory('/tmp/uploads', filename)
+        return send_from_directory(UPLOAD_DIR, filename)
     except Exception as e:
         print(f"Error serving file {filename}: {e}")
         return "File not found", 404
@@ -948,17 +952,18 @@ def get_public_property_json(pid):
     return jsonify(d)
 
 if __name__ == "__main__":
-    # Verify upload directory exists
-    if not os.path.exists('/tmp/uploads'):
-        os.makedirs('/tmp/uploads', exist_ok=True)
-        print("Created /tmp/uploads directory")
+    # Verify directories exist
+    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
     
-    # List existing files for debugging
+    # Check if database has data
     try:
-        files = os.listdir('/tmp/uploads')
-        print(f"Existing files in uploads: {files}")
+        conn = sqlite3.connect(DB_PATH)
+        count = conn.execute("SELECT COUNT(*) FROM properties").fetchone()[0]
+        conn.close()
+        print(f"Current properties in database: {count}")
     except:
-        print("Could not list uploads directory")
+        print("Database not yet initialized")
     
     print(f"""
     ╔══════════════════════════════════════════════════════════╗
@@ -978,8 +983,9 @@ if __name__ == "__main__":
     ║  • Public API for property details                      ║
     ║  • CSRF Protection Enabled                              ║
     ║  • Password Change Routes Fixed (No more 404!)          ║
-    ║  • Upload directory: /tmp/uploads (Leapcell compatible) ║
-    ║  • Images will be served correctly from /uploads/       ║
+    ║  • PERSISTENT STORAGE: /data (Data survives redeploys!) ║
+    ║  • Database: {DB_PATH}                                    ║
+    ║  • Uploads: {UPLOAD_DIR}                                 ║
     ╚══════════════════════════════════════════════════════════╝
     """)
     app.run(debug=True, port=5000)
