@@ -20,6 +20,28 @@ app = Flask(__name__)
 # Use environment variable for secret key (works on Leapcell)
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 
+# ================================================================
+#  CSRF PROTECTION - FIXED
+# ================================================================
+def get_csrf_token():
+    """Generate or retrieve CSRF token for form protection"""
+    if 'csrf_token' not in session:
+        session['csrf_token'] = secrets.token_hex(32)
+    return session['csrf_token']
+
+@app.context_processor
+def inject_csrf():
+    """Make csrf_token available in all templates"""
+    return dict(csrf_token=get_csrf_token)
+
+def validate_csrf():
+    """Validate CSRF token from POST requests"""
+    form_token = request.form.get('_csrf')
+    session_token = session.get('csrf_token')
+    if not form_token or not session_token or form_token != session_token:
+        return False
+    return True
+
 WHATSAPP_NUMBER   = "18681234567"
 BUSINESS_EMAIL    = "info@betterproperties.com"
 BUSINESS_PHONE    = "+1 (868) 123-4567"
@@ -435,6 +457,11 @@ def mgr_required(f):
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
+        # Validate CSRF token - FIXED
+        if not validate_csrf():
+            flash("❌ Invalid security token. Please try again.", "error")
+            return redirect(url_for("admin_login"))
+        
         u = request.form.get("username", "")
         p = request.form.get("password", "")
         conn = get_db()
@@ -450,7 +477,7 @@ def admin_login():
             session["full_name"] = full_name
             flash(f"✅ Welcome back, {session['full_name']}!")
             return redirect(url_for("admin_dashboard"))
-        flash("❌ Invalid credentials")
+        flash("❌ Invalid credentials", "error")
     return render_template("admin_login.html", config={"name": BUSINESS_NAME})
 
 @app.route("/admin/logout")
@@ -816,6 +843,7 @@ if __name__ == "__main__":
     ║  • File upload validation (max 5MB)                     ║
     ║  • Social Media Links (Facebook & Instagram)            ║
     ║  • Public API for property details                      ║
+    ║  • CSRF Protection Enabled                              ║
     ╚══════════════════════════════════════════════════════════╝
     """)
     app.run(debug=True, port=5000)
