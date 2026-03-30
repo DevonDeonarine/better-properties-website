@@ -790,17 +790,53 @@ def admin_delete_user(username):
     flash(f"✅ User '{username}' removed.")
     return redirect(url_for("admin_dashboard") + "#users")
 
+# ── Change Password (Manager only) - FIXED 404 ERROR ────────────────────
 @app.route("/admin/user/password", methods=["POST"])
 @mgr_required
 def admin_change_password():
     f = request.form
+    username = f.get("username", "")
+    new_password = f.get("new_password", "")
+    
+    if not username or not new_password:
+        flash("❌ Username and password are required", "error")
+        return redirect(url_for("admin_dashboard") + "#users")
+    
+    if len(new_password) < 4:
+        flash("❌ Password must be at least 4 characters", "error")
+        return redirect(url_for("admin_dashboard") + "#users")
+    
     conn = get_db()
-    conn.execute("UPDATE users SET password=? WHERE username=?",
-        (hash_pw(f.get("new_password", "")), f.get("username", "")))
+    conn.execute("UPDATE users SET password=? WHERE username=?", (hash_pw(new_password), username))
     conn.commit()
     conn.close()
-    flash(f"✅ Password updated for '{f.get('username')}'.")
+    
+    flash(f"✅ Password updated for '{username}'!", "success")
     return redirect(url_for("admin_dashboard") + "#users")
+
+# ── Change own password (for any logged in user) ─────────────────────
+@app.route("/admin/change-password", methods=["POST"])
+@login_required
+def change_own_password():
+    f = request.form
+    username = session["username"]
+    old = f.get("current_password", "")
+    new = f.get("new_password", "")
+    
+    conn = get_db()
+    row = conn.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+    
+    if not row or row["password"] != hash_pw(old):
+        flash("❌ Current password is incorrect", "error")
+    elif len(new) < 4:
+        flash("❌ New password must be at least 4 characters", "error")
+    else:
+        conn.execute("UPDATE users SET password=? WHERE username=?", (hash_pw(new), username))
+        conn.commit()
+        flash(f"✅ Password updated for '{username}'!", "success")
+    
+    conn.close()
+    return redirect(url_for("admin_dashboard") + "#settings")
 
 # ── API for property data ────────────────────────────────────────
 @app.route("/admin/property/<int:pid>/json")
@@ -844,6 +880,7 @@ if __name__ == "__main__":
     ║  • Social Media Links (Facebook & Instagram)            ║
     ║  • Public API for property details                      ║
     ║  • CSRF Protection Enabled                              ║
+    ║  • Password Change Routes Fixed (No more 404!)          ║
     ╚══════════════════════════════════════════════════════════╝
     """)
     app.run(debug=True, port=5000)
