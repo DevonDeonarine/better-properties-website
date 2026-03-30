@@ -27,16 +27,16 @@ BUSINESS_NAME     = "Better Properties"
 BUSINESS_SUB      = "Real Estate Services Ltd"
 BUSINESS_LOCATION = "Trinidad & Tobago"
 SOLD_EXPIRY_DAYS  = 7
-AUTO_CLEANUP_HOURS = 1  # Check every hour (change to 0.5 for 30 mins, 24 for once a day)
+AUTO_CLEANUP_HOURS = 1  # Check every hour
 
 # Database path - MUST use /tmp on Leapcell (only writable directory)
 # On Leapcell serverless, only /tmp is writable
 # On local development, it will use the current directory
-if os.path.exists('/tmp'):
+if os.path.exists('/tmp') or os.name == 'posix':
     # Running on Leapcell or similar serverless environment
     DB_PATH = '/tmp/better_properties.db'
 else:
-    # Local development
+    # Local development (Windows)
     DB_PATH = os.path.join(os.path.dirname(__file__), "better_properties.db")
 
 print(f"Database path: {DB_PATH}")  # Helpful for debugging
@@ -68,6 +68,8 @@ def hash_pw(p):
 def init_db():
     conn = get_db()
     c = conn.cursor()
+    
+    # Create users table
     c.execute("""CREATE TABLE IF NOT EXISTS users (
         username TEXT PRIMARY KEY,
         password TEXT NOT NULL,
@@ -76,6 +78,8 @@ def init_db():
         email TEXT DEFAULT '',
         phone TEXT DEFAULT ''
     )""")
+    
+    # Create properties table
     c.execute("""CREATE TABLE IF NOT EXISTS properties (
         id          INTEGER PRIMARY KEY AUTOINCREMENT,
         title       TEXT NOT NULL,
@@ -111,15 +115,21 @@ def init_db():
         
         featured    INTEGER DEFAULT 0
     )""")
+    
+    # Create viewing_requests table
     c.execute("""CREATE TABLE IF NOT EXISTS viewing_requests (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
         property     TEXT, name TEXT, email TEXT, phone TEXT,
         requested_dt TEXT,
         submitted_at TEXT DEFAULT CURRENT_TIMESTAMP
     )""")
+    
+    # Create analytics table
     c.execute("""CREATE TABLE IF NOT EXISTS analytics (
         date TEXT PRIMARY KEY, views INTEGER DEFAULT 0, inquiries INTEGER DEFAULT 0
     )""")
+    
+    # Create agents table
     c.execute("""CREATE TABLE IF NOT EXISTS agents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
@@ -127,7 +137,7 @@ def init_db():
         email TEXT DEFAULT '', photo TEXT DEFAULT '', bio TEXT DEFAULT ''
     )""")
     
-    # Create admin user with secure password
+    # Create admin user
     admin_password = hash_pw("admin123")
     c.execute("INSERT OR IGNORE INTO users (username, password, role, full_name, email, phone) VALUES (?,?,?,?,?,?)", 
               ("manager", admin_password, "manager", "System Administrator", "admin@betterproperties.com", "18681234567"))
@@ -139,46 +149,9 @@ def init_db():
     c.execute("INSERT OR IGNORE INTO agents (username, name, phone, email) VALUES (?,?,?,?)",
               ("employee1", "John Smith", "18687654321", "john@betterproperties.com"))
     
-    # Add sample properties if none exist
-    c.execute("SELECT COUNT(*) FROM properties")
-    if c.fetchone()[0] == 0:
-        areas = ["Chaguanas", "Couva", "San Fernando", "Port of Spain"]
-        
-        # Sample images for residential property
-        residential_images = json.dumps([
-            "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800",
-            "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800",
-            "https://images.unsplash.com/photo-1576941089067-2de3c901e126?w=800"
-        ])
-        
-        # Sample images for commercial property
-        commercial_images = json.dumps([
-            "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800",
-            "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800",
-            "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800"
-        ])
-        
-        # Residential sample
-        c.execute("""INSERT INTO properties
-            (title, price, listing_type, property_type, status, area, badge, agent, agent_id,
-             bedrooms, bathrooms, living_rooms, kitchens, garages, sqft, description, featured, images)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
-            "Beautiful Family Home", 450000, "sale", "residential", "Available",
-            "Chaguanas", "New Listing", "John Smith", "employee1", 4, 3, 2, 1, 2, 2500,
-            "Spacious family home with modern amenities. Perfect for families seeking comfort in a great neighbourhood.",
-            1, residential_images
-        ))
-        
-        # Commercial sample
-        c.execute("""INSERT INTO properties
-            (title, price, listing_type, property_type, status, area, badge, agent, agent_id,
-             offices, conference_rooms, bathrooms, kitchens, parking_spaces, sqft, floor_number, description, images)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
-            "Prime Office Space", 350000, "lease", "commercial", "Available",
-            "Port of Spain", "Prime Location", "System Administrator", "manager", 8, 2, 4, 1, 15, 3500, 3,
-            "Modern office space in the heart of Port of Spain. Perfect for businesses looking for a prime location.",
-            commercial_images
-        ))
+    # Skip sample properties insertion to avoid column mismatch on Leapcell
+    # Properties will be added through admin panel
+    print("Database initialized successfully (empty). Add properties via admin panel.")
     
     conn.commit()
     conn.close()
@@ -225,6 +198,7 @@ def migrate_db():
     
     conn.close()
 
+# Initialize database
 init_db()
 migrate_db()
 
@@ -252,7 +226,7 @@ def auto_cleanup():
             # Delete each expired property
             for r in rows:
                 conn.execute("DELETE FROM properties WHERE id=?", (r["id"],))
-                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Auto-deleted sold property: {r['title']} (sold on {r['sold_at'][:10]})")
+                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Auto-deleted sold property: {r['title']}")
             
             if rows:
                 conn.commit()
@@ -377,7 +351,7 @@ def get_expiry_stats():
         try:
             sold = datetime.fromisoformat(p["sold_at"])
             days_left = SOLD_EXPIRY_DAYS - (now - sold).days
-            if 0 < days_left <= 3:  # Expiring in 3 days or less
+            if 0 < days_left <= 3:
                 expiring_soon.append({"title": p["title"], "days_left": days_left})
         except:
             pass
