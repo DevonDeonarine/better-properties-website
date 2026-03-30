@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Satisfy&display=swap" rel="stylesheet">
     
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
         * {
@@ -178,6 +178,7 @@
             background-clip: text;
             display: inline-block;
             white-space: nowrap;
+            text-shadow: 3px 3px 8px rgba(0,0,0,0.2);
         }
         
         .company-title span {
@@ -324,7 +325,10 @@
         .filter-buttons-group {
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
+        }
+        
+        .filter-buttons-group label {
+            visibility: hidden;
         }
         
         .filter-buttons {
@@ -889,30 +893,12 @@
         }
         
         /* Share Buttons */
-        .share-section {
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 15px 0;
-        }
-
-        .share-banner {
-            background: linear-gradient(135deg, #2c3e50 0%, #1a2632 100%);
-            color: #ffd700;
-            text-align: center;
-            padding: 10px;
-            font-weight: 700;
-            font-size: 1em;
-            letter-spacing: 1px;
-        }
-
         .share-buttons {
             display: flex;
+            gap: 10px;
+            margin: 15px 0;
             justify-content: center;
             flex-wrap: wrap;
-            gap: 10px;
-            padding: 12px;
-            background: var(--contact-icon-bg);
         }
         
         .share-btn {
@@ -932,7 +918,7 @@
         }
         
         .share-facebook { background: #1877f2; }
-        .share-twitter { background: #000000; }
+        .share-twitter { background: #1da1f2; }
         .share-whatsapp { background: #25d366; }
         .share-email { background: #ea4335; }
         
@@ -1066,7 +1052,6 @@
         
         <div class="filters-section">
             <form method="GET" action="/" id="filterForm">
-                <input type="hidden" name="listing_type" id="listingTypeInput" value="{{ selected_listing_type|default('') }}">
                 <div class="filters-row">
                     <div class="filter-group">
                         <label id="searchLabel"><i class="fas fa-search"></i> Search Properties</label>
@@ -1120,6 +1105,7 @@
                         </select>
                     </div>
                     <div class="filter-group filter-buttons-group">
+                        <label>&nbsp;</label>
                         <div class="filter-buttons">
                             <button type="submit" class="btn-primary" id="applyFiltersBtn"><i class="fas fa-filter"></i> Apply Filters</button>
                             <a href="/" class="btn-reset-icon" id="resetBtn"><i class="fas fa-undo-alt"></i></a>
@@ -1136,7 +1122,7 @@
                         <div class="slideshow-container" id="slideshow-{{ p.id }}">
                             {% if p.images and p.images|length > 0 %}
                                 {% for img in p.images %}
-                                    <img src="{{ img }}" alt="{{ p.title }}" class="slideshow-image{% if loop.first %} active{% endif %}" data-slide-index="{{ loop.index0 }}">
+                                    <img src="{{ img }}" alt="{{ p.title }}" class="slideshow-image" data-slide-index="{{ loop.index0 }}">
                                 {% endfor %}
                             {% else %}
                                 <img src="https://via.placeholder.com/400x300?text=No+Image" alt="No Image" class="slideshow-image active">
@@ -1155,9 +1141,7 @@
                             <div class="property-type-badge">
                                 {% if p.property_type == 'residential' %}🏠 Residential{% else %}🏢 Commercial{% endif %}
                             </div>
-                            {% if p.images and p.images|length > 0 %}
                             <div class="photo-counter">{{ p.images|length }} photos</div>
-                            {% endif %}
                         </div>
                     </div>
                     <div class="property-details">
@@ -1187,7 +1171,7 @@
                                 <i class="fas fa-phone-alt"></i>
                                 <span class="call-text">Call</span>
                             </a>
-                            <a href="/cdn-cgi/l/email-protection#413a3a61222e2f2728266f242c20282d613c3c" class="contact-icon email">
+                            <a href="mailto:{{ config.email }}" class="contact-icon email">
                                 <i class="fas fa-envelope"></i>
                                 <span class="email-text">Email</span>
                             </a>
@@ -1227,32 +1211,6 @@
                 <h3 id="noPropertiesText">No properties found</h3>
                 <p id="adjustFiltersText">Try adjusting your filters</p>
             </div>
-        {% endif %}
-
-        <!-- Pagination -->
-        {% if total_pages > 1 %}
-        <div class="pagination" style="display:flex;justify-content:center;align-items:center;gap:10px;margin:30px 0;flex-wrap:wrap;">
-            {% if page > 1 %}
-                <a href="?page={{ page - 1 }}&search={{ search }}&area={{ selected_area }}&status={{ selected_status }}&property_type={{ selected_property_type }}&listing_type={{ selected_listing_type }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort }}"
-                   style="padding:10px 18px;background:var(--card-bg);border:1px solid #ffd700;border-radius:5px;color:var(--text-primary);text-decoration:none;font-weight:600;">
-                   &laquo; Prev
-                </a>
-            {% endif %}
-            {% for p_num in range(1, total_pages + 1) %}
-                <a href="?page={{ p_num }}&search={{ search }}&area={{ selected_area }}&status={{ selected_status }}&property_type={{ selected_property_type }}&listing_type={{ selected_listing_type }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort }}"
-                   style="padding:10px 18px;border-radius:5px;text-decoration:none;font-weight:600;
-                          {% if p_num == page %}background:linear-gradient(135deg,#ffd700,#ffb347);color:#2c3e50;border:1px solid #ffd700;{% else %}background:var(--card-bg);border:1px solid #ffd700;color:var(--text-primary);{% endif %}">
-                   {{ p_num }}
-                </a>
-            {% endfor %}
-            {% if page < total_pages %}
-                <a href="?page={{ page + 1 }}&search={{ search }}&area={{ selected_area }}&status={{ selected_status }}&property_type={{ selected_property_type }}&listing_type={{ selected_listing_type }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort }}"
-                   style="padding:10px 18px;background:var(--card-bg);border:1px solid #ffd700;border-radius:5px;color:var(--text-primary);text-decoration:none;font-weight:600;">
-                   Next &raquo;
-                </a>
-            {% endif %}
-            <span style="color:var(--text-muted);font-size:0.9em;">{{ total_props }} properties total</span>
-        </div>
         {% endif %}
     </div>
     
@@ -1300,7 +1258,7 @@
             <div class="contact-info">
                 <a href="https://wa.me/{{ config.whatsapp }}" target="_blank"><i class="fab fa-whatsapp"></i> <span id="footerWhatsapp">WhatsApp</span></a>
                 <a href="tel:{{ config.phone|replace('+', '')|replace(' ', '')|replace('(', '')|replace(')', '')|replace('-', '') }}"><i class="fas fa-phone-alt"></i> <span id="footerPhone">{{ config.phone }}</span></a>
-                <a href="/cdn-cgi/l/email-protection#cdb6b6edaea2a3aba4aae3a8a0aca4a1edb0b0"><i class="fas fa-envelope"></i> <span id="footerEmail">{{ config.email }}</span></a>
+                <a href="mailto:{{ config.email }}"><i class="fas fa-envelope"></i> <span id="footerEmail">{{ config.email }}</span></a>
                 <a href="{{ config.facebook }}" target="_blank"><i class="fab fa-facebook-f"></i> <span id="footerFacebook">Facebook</span></a>
                 <a href="{{ config.instagram }}" target="_blank"><i class="fab fa-instagram"></i> <span id="footerInstagram">Instagram</span></a>
                 <span><i class="fas fa-map-marker-alt"></i> <span id="footerLocation">{{ config.location }}</span></span>
@@ -1309,33 +1267,32 @@
         </div>
     </div>
     
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-        // ── THEME (Dark mode is DEFAULT) ─────────────────────────────────────────
+    <script>
+        // Dark Mode - Light Mode is DEFAULT
         const themeToggle = document.getElementById('themeToggle');
         const body = document.body;
-
-        function applyTheme(theme) {
-            if (theme === 'light') {
-                body.classList.remove('dark-mode');
-                themeToggle.innerHTML = '<i class="fas fa-moon"></i><span>Dark Mode</span>';
-            } else {
-                body.classList.add('dark-mode');
-                themeToggle.innerHTML = '<i class="fas fa-sun"></i><span>Light Mode</span>';
-            }
+        
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-mode');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i><span>Light Mode</span>';
+        } else {
+            body.classList.remove('dark-mode');
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i><span>Dark Mode</span>';
         }
-
-        // Default is dark — only switch to light if user explicitly chose light before
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        applyTheme(savedTheme);
-
+        
         themeToggle.addEventListener('click', function() {
-            const isDark = body.classList.contains('dark-mode');
-            const newTheme = isDark ? 'light' : 'dark';
-            localStorage.setItem('theme', newTheme);
-            applyTheme(newTheme);
+            body.classList.toggle('dark-mode');
+            if (body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i><span>Light Mode</span>';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i><span>Dark Mode</span>';
+            }
         });
         
-        // TRANSLATIONS (same as before - keeping for brevity)
+        // TRANSLATIONS - 5 Languages
         const translations = {
             en: {
                 searchLabel: 'Search Properties', areaLabel: 'Area', propertyTypeLabel: 'Property Type', statusLabel: 'Status',
@@ -1642,21 +1599,17 @@
             return '$' + amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
         
-        // ── DETAILS MODAL ────────────────────────────────────────────────────────
-        // #3 fix: property title is set via data attribute, never injected into onclick HTML
-        // #4 fix: AbortController cleans up mortgage listeners on every open
-        let mortgageAbortController = null;
-
+        // Open Details Modal
         async function openDetailsModal(propertyId) {
             try {
                 const response = await fetch(`/api/property/${propertyId}`);
-                if (!response.ok) throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const property = await response.json();
-
+                
                 addToRecentlyViewed(property);
-
+                
                 const t = translations[currentLang] || translations.en;
-
+                
                 let featuresHtml = '';
                 if (property.property_type === 'residential') {
                     featuresHtml = `
@@ -1671,24 +1624,24 @@
                         <div class="details-feature"><i class="fas fa-arrows-alt"></i> ${property.sqft || 0} sq ft</div>
                     `;
                 }
-
+                
                 let galleryHtml = '';
                 if (property.images && property.images.length > 0) {
                     galleryHtml = `
                         <img src="${property.images[0]}" alt="${property.title}" class="main-detail-image" id="mainDetailImage">
                         <div class="details-gallery">
-                            ${property.images.map(img => `
-                                <img src="${img}" alt="${property.title}" onclick="document.getElementById('mainDetailImage').src=this.src">
+                            ${property.images.map((img, idx) => `
+                                <img src="${img}" alt="${property.title}" onclick="document.getElementById('mainDetailImage').src='${img}'">
                             `).join('')}
                         </div>
                     `;
                 } else {
                     galleryHtml = `<img src="https://via.placeholder.com/800x400?text=No+Image" alt="No Image" class="main-detail-image">`;
                 }
-
+                
                 const shareUrl = encodeURIComponent(window.location.href);
                 const shareTitle = encodeURIComponent(property.title);
-
+                
                 document.getElementById('detailsContent').innerHTML = `
                     <div class="details-grid">
                         <div class="details-gallery-section">
@@ -1700,17 +1653,14 @@
                             <div class="views-count"><i class="fas fa-eye"></i> ${property.views || 0} views</div>
                             <div class="details-features">${featuresHtml}<div class="details-feature"><i class="fas fa-map-marker-alt"></i> ${property.area || 'N/A'}</div><div class="details-feature"><i class="fas fa-tag"></i> ${property.status}</div></div>
                             <div class="details-description">${property.description || 'No description available.'}</div>
-
-                            <div class="share-section">
-                                <div class="share-banner"><i class="fas fa-share-alt"></i> Share This Property</div>
-                                <div class="share-buttons">
-                                    <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" class="share-btn share-facebook"><i class="fab fa-facebook-f"></i> Share</a>
-                                    <a href="https://x.com/intent/tweet?text=${shareTitle}&url=${shareUrl}" target="_blank" class="share-btn share-twitter"><i class="fa-brands fa-x-twitter"></i> X</a>
-                                    <a href="https://wa.me/?text=${shareTitle}%20${shareUrl}" target="_blank" class="share-btn share-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-                                    <a href="mailto:?subject=${shareTitle}&body=Check out this property: ${shareUrl}" class="share-btn share-email"><i class="fas fa-envelope"></i> Email</a>
-                                </div>
+                            
+                            <div class="share-buttons">
+                                <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" class="share-btn share-facebook"><i class="fab fa-facebook-f"></i> Share</a>
+                                <a href="https://twitter.com/intent/tweet?text=${shareTitle}&url=${shareUrl}" target="_blank" class="share-btn share-twitter"><i class="fab fa-twitter"></i> Tweet</a>
+                                <a href="https://wa.me/?text=${shareTitle}%20${shareUrl}" target="_blank" class="share-btn share-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                                <a href="mailto:?subject=${shareTitle}&body=Check out this property: ${shareUrl}" class="share-btn share-email"><i class="fas fa-envelope"></i> Email</a>
                             </div>
-
+                            
                             <div class="mortgage-calculator">
                                 <h3><i class="fas fa-calculator"></i> Mortgage Calculator</h3>
                                 <div class="calc-input-group">
@@ -1729,7 +1679,7 @@
                                     Monthly Payment: ${formatMoney(calculateMortgage(property.price, 10, 5, 30))}
                                 </div>
                             </div>
-
+                            
                             <div class="details-contact">
                                 <h3>Contact Us</h3>
                                 <div class="contact-icons" style="margin-top: 10px;">
@@ -1739,104 +1689,83 @@
                                     <a href="{{ config.facebook }}" target="_blank" class="contact-icon facebook"><i class="fab fa-facebook-f"></i><span>Facebook</span></a>
                                     <a href="{{ config.instagram }}" target="_blank" class="contact-icon instagram"><i class="fab fa-instagram"></i><span>Instagram</span></a>
                                 </div>
-                                <!-- #3 fix: property id/title stored in data attributes, read by JS — no inline onclick injection -->
-                                <button class="btn-schedule details-schedule-btn"
-                                        data-property-id="${property.id}"
-                                        data-property-title="${property.title.replace(/"/g, '&quot;')}"
-                                        style="margin-top: 15px; width: 100%;">
-                                    <i class="fas fa-calendar-plus"></i> Schedule Viewing
-                                </button>
+                                <button class="btn-schedule" onclick="closeDetailsModal(); openModal(${property.id}, '${property.title.replace(/'/g, "\\'")}')" style="margin-top: 15px; width: 100%;"><i class="fas fa-calendar-plus"></i> Schedule Viewing</button>
                             </div>
                         </div>
                     </div>
                 `;
-
-                // #3 fix: safe event binding via data attributes
-                document.querySelector('.details-schedule-btn').addEventListener('click', function() {
-                    const pid   = this.dataset.propertyId;
-                    const title = this.dataset.propertyTitle;
-                    closeDetailsModal();
-                    openModal(pid, title);
-                });
-
-                // #4 fix: abort any previous mortgage listeners before adding new ones
-                if (mortgageAbortController) mortgageAbortController.abort();
-                mortgageAbortController = new AbortController();
-                const { signal } = mortgageAbortController;
-
+                
                 const price = property.price;
-                const downPaymentInput  = document.getElementById('downPayment');
+                const downPaymentInput = document.getElementById('downPayment');
                 const interestRateInput = document.getElementById('interestRate');
-                const loanTermInput     = document.getElementById('loanTerm');
-                const calcResult        = document.getElementById('calcResult');
-
+                const loanTermInput = document.getElementById('loanTerm');
+                const calcResult = document.getElementById('calcResult');
+                
                 function updateMortgage() {
-                    const down    = parseFloat(downPaymentInput.value)  || 0;
-                    const rate    = parseFloat(interestRateInput.value) || 0;
-                    const term    = parseFloat(loanTermInput.value)     || 30;
-                    calcResult.innerHTML = `Monthly Payment: ${formatMoney(calculateMortgage(price, down, rate, term))}`;
+                    const down = parseFloat(downPaymentInput.value) || 0;
+                    const rate = parseFloat(interestRateInput.value) || 0;
+                    const term = parseFloat(loanTermInput.value) || 30;
+                    const payment = calculateMortgage(price, down, rate, term);
+                    calcResult.innerHTML = `Monthly Payment: ${formatMoney(payment)}`;
                 }
-
-                downPaymentInput.addEventListener('input',  updateMortgage, { signal });
-                interestRateInput.addEventListener('input', updateMortgage, { signal });
-                loanTermInput.addEventListener('input',     updateMortgage, { signal });
-
+                
+                downPaymentInput.addEventListener('input', updateMortgage);
+                interestRateInput.addEventListener('input', updateMortgage);
+                loanTermInput.addEventListener('input', updateMortgage);
+                
                 document.getElementById('detailsModal').style.display = 'block';
             } catch (error) {
                 console.error('Error loading property details:', error);
                 alert('Error loading property details: ' + error.message);
             }
         }
-
+        
         function closeDetailsModal() {
             document.getElementById('detailsModal').style.display = 'none';
-            // Clean up mortgage listeners when modal closes
-            if (mortgageAbortController) { mortgageAbortController.abort(); mortgageAbortController = null; }
         }
         
-        // ── LISTING TYPE TABS — synced to hidden form field (#2 fix) ─────────────
-        // On load, restore active tab from the server-returned selected_listing_type
-        (function() {
-            const savedType = document.getElementById('listingTypeInput').value || 'all';
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.type === savedType ||
-                    (savedType === '' && btn.dataset.type === 'all'));
-            });
-            // Also apply client-side visibility so the page is consistent on load
-            filterByListingType(savedType === '' ? 'all' : savedType);
-        })();
-
+        // Listing Type Filter
+        let currentListingType = 'all';
+        
         function filterByListingType(type) {
+            currentListingType = type;
             document.querySelectorAll('.property-card').forEach(card => {
                 const listingType = card.getAttribute('data-listing-type');
-                card.style.display = (type === 'all' || type === '' || listingType === type) ? '' : 'none';
+                card.style.display = (type === 'all' || listingType === type) ? 'block' : 'none';
             });
         }
-
-        function activateTab(type) {
+        
+        document.getElementById('tabAll').addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`.tab-btn[data-type="${type}"]`).classList.add('active');
-            // Write value to hidden input so the next form submit keeps the tab
-            document.getElementById('listingTypeInput').value = (type === 'all') ? '' : type;
-            // Also filter client-side immediately
-            filterByListingType(type);
-        }
-
-        document.getElementById('tabAll').addEventListener('click',   () => activateTab('all'));
-        document.getElementById('tabSale').addEventListener('click',  () => activateTab('sale'));
-        document.getElementById('tabRent').addEventListener('click',  () => activateTab('rent'));
-        document.getElementById('tabLease').addEventListener('click', () => activateTab('lease'));
-
-        // Property Type dropdown — client-side filter (doesn't need form sync, already a select in the form)
+            document.getElementById('tabAll').classList.add('active');
+            filterByListingType('all');
+        });
+        document.getElementById('tabSale').addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tabSale').classList.add('active');
+            filterByListingType('sale');
+        });
+        document.getElementById('tabRent').addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tabRent').classList.add('active');
+            filterByListingType('rent');
+        });
+        document.getElementById('tabLease').addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tabLease').classList.add('active');
+            filterByListingType('lease');
+        });
+        
+        // Property Type Filter
         document.getElementById('propertyTypeSelect').addEventListener('change', function(e) {
             const selectedType = e.target.value;
             document.querySelectorAll('.property-card').forEach(card => {
                 const propertyType = card.getAttribute('data-property-type');
-                card.style.display = (selectedType === '' || propertyType === selectedType) ? '' : 'none';
+                card.style.display = (selectedType === '' || propertyType === selectedType) ? 'block' : 'none';
             });
         });
         
-        // Map Toggle - uses OpenStreetMap (no API key required)
+        // Map Toggle
         function toggleMap(propertyId, area) {
             const mapContainer = document.getElementById(`map-${propertyId}`);
             const mapFrame = document.getElementById(`map-frame-${propertyId}`);
@@ -1845,7 +1774,7 @@
                 mapFrame.src = '';
             } else {
                 const searchQuery = encodeURIComponent(`${area}, {{ config.location }}`);
-                mapFrame.src = `https://www.openstreetmap.org/export/embed.html?bbox=-62.5%2C10.0%2C-60.5%2C11.5&layer=mapnik&marker=&query=${searchQuery}`;
+                mapFrame.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyDummyKey&q=${searchQuery}`;
                 mapContainer.classList.add('active');
             }
         }
@@ -1886,15 +1815,11 @@
         window.onclick = function(event) {
             if (event.target == document.getElementById('viewingModal')) closeModal();
             if (event.target == document.getElementById('detailsModal')) closeDetailsModal();
-        };
-
-        // ── INIT on page load ─────────────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', function() {
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
             initSlideshows();
             updateRecentlyViewedDisplay();
-            // Re-apply language on load (updateLanguage already called above, but DOM
-            // may not have been fully ready the first time on some browsers)
-            updateLanguage();
         });
     </script>
 </body>
