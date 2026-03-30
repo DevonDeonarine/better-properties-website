@@ -29,7 +29,7 @@ FACEBOOK_URL    = "https://facebook.com/betterproperties"
 INSTAGRAM_URL   = "https://instagram.com/betterproperties"
 
 # ================================================================
-#  HELPER FUNCTIONS (MUST BE DEFINED BEFORE THEY ARE USED!)
+#  HELPER FUNCTIONS
 # ================================================================
 def hash_pw(p):
     salt = "better_properties_salt_2026"
@@ -60,12 +60,12 @@ def validate_csrf():
     return True
 
 # ================================================================
-#  IN-MEMORY STORAGE (NOW hash_pw IS DEFINED!)
+#  IN-MEMORY STORAGE
 # ================================================================
 properties = []
 property_id_counter = 1
 
-# Users - hash_pw is now defined, so this works!
+# Users
 users = {
     "manager": hash_pw("admin123"),
     "employee1": hash_pw("emp123")
@@ -117,13 +117,51 @@ def get_config():
 # ================================================================
 @app.route("/")
 def index():
-    try:
-        return render_template("index.html", 
-            props=properties, 
-            config=get_config(),
-            fmt_price=fmt_price)
-    except Exception as e:
-        return f"<h1>Template Error</h1><p>Missing 'index.html' template. Error: {str(e)}</p><p>Admin login at <a href='/admin/login'>/admin/login</a> (manager/admin123)</p>"
+    # Get filter values from URL parameters
+    search = request.args.get('search', '')
+    selected_area = request.args.get('area', '')
+    selected_status = request.args.get('status', '')
+    selected_listing_type = request.args.get('listing_type', '')
+    min_price = request.args.get('min_price', '')
+    max_price = request.args.get('max_price', '')
+    
+    # Filter properties based on criteria
+    filtered_props = properties
+    if search:
+        filtered_props = [p for p in filtered_props if search.lower() in p.get('title', '').lower() or search.lower() in p.get('description', '').lower()]
+    if selected_area:
+        filtered_props = [p for p in filtered_props if p.get('area', '') == selected_area]
+    if selected_status:
+        filtered_props = [p for p in filtered_props if p.get('status', '') == selected_status]
+    if selected_listing_type:
+        filtered_props = [p for p in filtered_props if p.get('listing_type', '') == selected_listing_type]
+    if min_price:
+        try:
+            min_val = int(min_price)
+            filtered_props = [p for p in filtered_props if p.get('price', 0) >= min_val]
+        except:
+            pass
+    if max_price:
+        try:
+            max_val = int(max_price)
+            filtered_props = [p for p in filtered_props if p.get('price', 0) <= max_val]
+        except:
+            pass
+    
+    # Get unique areas for filter dropdown
+    areas = sorted(list(set([p.get('area', '') for p in properties if p.get('area')])))
+    
+    return render_template("index.html", 
+        props=filtered_props,
+        areas=areas,
+        search=search,
+        selected_area=selected_area,
+        selected_status=selected_status,
+        selected_listing_type=selected_listing_type,
+        min_price=min_price,
+        max_price=max_price,
+        config=get_config(),
+        fmt_price=fmt_price)
 
 @app.route("/property/<int:property_id>")
 def view_property(property_id):
